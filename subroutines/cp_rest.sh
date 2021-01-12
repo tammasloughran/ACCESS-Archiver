@@ -7,11 +7,10 @@ if [ -f $here/tmp/$loc_exp/omip_info.csv ]; then
 else
   omip=false
 fi
-determ_omip_yr () {
-  while IFS=' ' read cycle start end; do
+determ_omip_val () {
+  while IFS=' ' read cycle outvals; do
     if [[ $1 == */${cycle//output/restart}/* ]]; then
-      syear=$start
-      eyear=$end
+      outval=$outvals
       break
     fi
   done < $here/tmp/$loc_exp/omip_info.csv
@@ -38,11 +37,12 @@ while IFS=, read -r file; do
   fdir=`dirname $file`
   fname=`basename $file`
   if $omip; then
-    determ_omip_yr $fdir
-    if [[ $fname != *$eyear* ]]; then
-      fname=${fname}-${eyear}
-    fi
-    unset syear eyear
+    determ_omip_val $fdir
+    #if [[ $fname != *$eyear* ]]; then
+    #  fname=${fname}-${eyear}
+    #fi
+    fname=${fname}-${outval}
+    unset outval
   fi
   if [ ! -f $curdir/${fname} ]; then
     echo "-- $fname"
@@ -58,11 +58,12 @@ while IFS=, read -r file; do
   fdir=`dirname $file`
   fname=`basename $file`
   if $omip; then
-    determ_omip_yr $fdir
-    if [[ $fname != *$eyear* ]]; then
-      fname=${fname}-${eyear}
-    fi
-    unset syear eyear
+    determ_omip_val $fdir
+    #if [[ $fname != *$eyear* ]]; then
+    #  fname=${fname}-${eyear}
+    #fi
+    fname=${fname}-${outval}
+    unset outval
   fi
   if [ ! -f $curdir/${fname} ]; then
     echo "-- $fname"
@@ -78,11 +79,12 @@ while IFS=, read -r file; do
   fdir=`dirname $file`
   fname=`basename $file`
   if $omip; then
-    determ_omip_yr $fdir
-    if [[ $fname != *$eyear* ]]; then
-      fname=${fname}-${eyear}
-    fi
-    unset syear eyear
+    determ_omip_val $fdir
+    #if [[ $fname != *$eyear* ]]; then
+    #  fname=${fname}-${eyear}
+    #fi
+    fname=${fname}-${outval}
+    unset outval
   fi
   if [ ! -f $curdir/${fname} ]; then
     echo "-- $fname"
@@ -93,9 +95,9 @@ done < $here/tmp/$loc_exp/rest_cpl_files.csv
 #exit
 
 # do cull
-if $omip; then
-  echo "omip - no restart cull"
-elif $esm; then
+#if $omip; then
+#  echo "omip - no restart cull"
+if $esm; then
   echo "cleaning up restarts - ESM"
   python $here/subroutines/restart_cleanup_esm.py -v -c -d 0 --archivedir $arch_dir $loc_exp
 else
@@ -114,4 +116,5 @@ for restfile in $restfiles; do
   rsync -av $link ${restfile}_tmp
   mv ${restfile}_tmp $restfile
   chmod 644 $restfile
+  chgrp p66 $restfile
 done

@@ -27,7 +27,7 @@ year=""
 
 echo "searching for history"
 if [ $dir_struc == 0 ]; then
-  find $base_dir/$loc_exp/history/atm -name "${loc_exp}*.p[m,a,d,e,7,i,8,j]*$year" -printf "%p\n" | sort \
+  find $base_dir/$loc_exp/history/atm -type f -name "${loc_exp}*.p[m,a,d,e,7,i,8,j]*$year" -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/hist_atm_files.csv
   find $base_dir/$loc_exp/history/ocn -name "*.nc*$year" -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/hist_ocn_files.csv
