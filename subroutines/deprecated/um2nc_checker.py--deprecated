@@ -1,0 +1,136 @@
+# Check the netcdf conversion from um2netcdf4.py
+
+import iris, sys, iris.util, numpy as np, cftime, argparse, warnings
+import resource
+
+parser = argparse.ArgumentParser(description="Validate um2netcdf4 conversion")
+parser.add_argument('-v', '--verbose', dest='verbose',
+                    action='count', default=0, help='verbose output')
+parser.add_argument('-q', dest='quick', action='store_true',
+                    help='Quick comparison (skip comparing data)')
+parser.add_argument('umfile', help='Original UM file')
+parser.add_argument('ncfile', help='Processed netCDF file')
+args = parser.parse_args()
+
+orig = iris.load(args.umfile)
+with warnings.catch_warnings():
+    # Warnings about unknown cell methods from min and max
+    warnings.simplefilter("ignore")
+    new = iris.load(args.ncfile)
+
+for cube in orig:
+    section = cube.attributes['STASH'].section
+    item = cube.attributes['STASH'].item
+    # Check for matching variable
+    name = 'fld_s%2.2di%3.3d' % (section, item)
+    if name in ['fld_s03i917','fld_s03i918','fld_s03i919','fld_s08i223',\
+                'fld_s03i920','fld_s02i208','fld_s03i100']:
+        continue
+    matches = [x for x in new if x.var_name.startswith(name)]
+    if args.verbose:
+        print("Var name match", name, matches)
+    if len(matches) == 1:
+        match = matches[0]
+    elif len(matches) > 1:
+        # Compare cell_methods.
+        cell_methods = [m.cell_methods[0].method for m in matches]
+        assert len(set(cell_methods)) == len(cell_methods), 'Error - non unique cell methods'
+        # NetCDF file uses max, min rather than maximum, minimum
+        # so strip the imum part
+        cube_method = cube.cell_methods[0].method.replace('imum','')
+        match = matches[cell_methods.index(cube_method)]
+    else:
+        raise Exception('No match %s' % name)
+    
+    # Check that the dimensions match
+    # For tiled variables from fieldsfiles, iris gives dimension
+    # order as (tile, time, lat, lon), so need to transpose
+    # For monthly means, the iris cubes don't have a time dimension
+    # but instead have a scalar coordinate
+    # If there's a vertical index with only a single pressure level
+    # also promote it. Need to transpose afterwards to bring time back
+    # to the front However exclude the 850 vorticity fld_s30i455 from this
+    # because it doesn't have a level dimension in the netCDF file.
+
+    dim_names = [d.name() for d in cube.dim_coords]
+    aux_names = [d.name() for d in cube.aux_coords]
+    if name != 'fld_s30i455' and 'pressure' in aux_names and 'pressure' not in dim_names and \
+       len(cube.coord('pressure').points) == 1:
+        cube = iris.util.new_axis(cube, 'pressure')
+        # Need to regenerate the list
+        dim_names = [d.name() for d in cube.dim_coords]
+        
+    if 'time' in dim_names:
+        tindex = dim_names.index('time')
+        if tindex != 0:
+            # Need to transpose to get it first
+            indices = list(range(len(dim_names)))
+            indices[tindex] = indices[0]
+            indices[0] = tindex
+            if args.verbose:
+                print("Transposing cube with indices %s" % repr(indices))
+            cube.transpose(indices)
+    else:
+        # If time is only a scalar coordinate, promote it to dimension coordinate
+        cube = iris.util.new_axis(cube, 'time')
+    if args.verbose:
+        print("Shapes", name, cube.shape, match.shape)
+    if cube.shape[1]-match.shape[1] == 11:
+        continue
+    if name in ['fld_s05i222','fld_s05i208'] :
+        match=match[:,0,:,:]
+    assert match.shape == cube.shape, 'Shape error %s' % name
+    # Check whether the coordinate values match.
+    # Note that iris incorrectly treats the fielsdsfile calendar as
+    # gregorian rather than proleptic gregorian which matters for
+    # PI control, so convert to date and compare components
+    t1 = cube.coord('time')
+    t2 = match.coord('time')
+    date1 = [(d.year, d.month, d.day, d.hour) for d in cftime.num2date(t1.points, t1.units.origin, t1.units.calendar)]
+    date2 = [(d.year, d.month, d.day, d.hour) for d in cftime.num2date(t2.points, t2.units.origin, t2.units.calendar)]
+    if args.verbose > 1:
+        print("Dates", date1)
+    #assert np.all(date1 == date2), 'Error: date mismatch %s' % name
+    if not args.quick:
+        pressure = False
+        for k in range(1,len(cube.dim_coords)):
+            c1 = cube.dim_coords[k]
+            c2 = match.dim_coords[k]
+            if c2.standard_name == 'air_pressure':
+                # Need to make the units match because iris uses hPa
+                c1.convert_units(c2.units)
+                pressure = True
+                assert np.allclose(c1.points, c2.points), 'Mismatch with pressure coord %s' % name
+            elif c2.standard_name in ['atmosphere_hybrid_height_coordinate','atmosphere_hybrid_sigma_pressure_coordinate']:
+                if args.verbose:
+                    print("Skipping model level coordinate comparison")
+            else:
+                # Lat and lon
+                assert np.allclose(c1.points, c2.points), 'Mismatch with coord %d' % k
+        # Now check the data. If the data is on pressure levels only compare
+        # for levels higher than 500 hPa because the masking is done differently
+        if pressure:
+            plev = match.coord('air_pressure').points
+            nplev = np.sum(plev < 50000)
+            if args.verbose:
+                print("Comparing on %d levels above 500 hPa" % nplev)
+            atol = 1e-8
+            if name in ['fld_s30i298','fld_s30i208']:
+                # Strictly this shouldn't be necessary ??
+                atol = 1e-5
+            if not np.allclose(cube.data[:,:nplev], match.data[:,:nplev],atol=atol):
+                # Find first value where it fails
+                flag = np.isclose(cube.data[:,:nplev], match.data[:,:nplev], atol=atol)
+                fail = [i for i in range(flag.size) if not flag.flat[i]]
+                i = fail[0]
+                print("Vals %20.10e %20.10e " % (cube.data[:,:nplev].flat[i], match.data[:,:nplev].flat[i]))
+                raise Exception("Data mismatch %s" % name)
+        else:
+            assert np.allclose(cube.data, match.data, equal_nan=True), 'Data mismatch %s' % name
+    del cube, match, matches
+    if args.verbose:
+        print("Memory usage", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+
+#print(args.ncfile,"OK")
+print(0)
+

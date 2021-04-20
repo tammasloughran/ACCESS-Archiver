@@ -10,7 +10,7 @@
 #
 # Now also saves the very first file automatically
 #
-# E.g. py ~/scripts/um2netcdf/restart_cleanup.py -v -c -d 0 --dryrun bi889 #--exclude=2015 (SSPs)
+# E.g. py restart_cleanup_cm2.py -v -c -d 0 --dryrun bi889 #--exclude=2015 (SSPs)
 
 from __future__ import print_function
 import argparse, pathlib, os, datetime
@@ -115,6 +115,13 @@ if not args.noocn:
     rlist = []
     for f in flist:
         if f.name.endswith('1231'):
+            if args.decadal_start >= 0:
+                # Remove everything where year%10 != decadal_start
+                y = int(f.name[-8:-4])
+                # Use y+1 here to match the atm years
+                if (y+1)%10 != args.decadal_start and y+1 not in args.exclude:
+                    rlist.append(f)
+        elif f.name.endswith('1231.tar'):
             if args.decadal_start >= 0:
                 # Remove everything where year%10 != decadal_start
                 y = int(f.name[-8:-4])

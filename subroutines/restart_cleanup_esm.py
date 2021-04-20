@@ -10,7 +10,7 @@
 #
 # Now also saves the very first file automatically
 #
-# E.g. py ~/scripts/um2netcdf/restart_cleanup_esm.py -v -c -d 0 --dryrun HI-08 #>/dev/null &
+# E.g. py restart_cleanup_esm.py -v -c -d 0 --dryrun HI-08 #>/dev/null &
 
 from __future__ import print_function
 import argparse, pathlib, os, datetime

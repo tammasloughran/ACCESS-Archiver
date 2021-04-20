@@ -8,53 +8,28 @@
 #
 #####################
 # USER SETTINGS
-#
-arch_dir=/g/data/p66/cm2704/archive
-base_dir=/scratch/p66/txz599/archive
-#
-zonal=false #DAMIP-CM2-only
-esm=true
-plev8=false
-omip=false
-#
+
+# where to archive
+arch_dir=/scratch/p66/cm2704/archive
+
+# above raw output directory
+#base_dir=/g/data/ik11/outputs/access-om2/
+base_dir=/g/data/ob22/jxb548/ACCESS-ESM/archive/
+#base_dir=/scratch/p66/cm2704/cylc-run
+#base_dir=/scratch/p66/txz599/archive
+
+# [cm2, cm2amip, esmscript, esmpayu, om2]
+access_version=esmpayu
+
 loc_exp=(
-#SSP-126-ext-06
-#cpocnice
-SSP-126-ext-05
-#SSP-126-ext-07
-#SSP-126-ext-08
-#SSP-126-ext-09
-#SSP-126-ext-10
-#SSP-126-ext-11
-#SSP-126-ext-12
-#SSP-126-ext-13
-#SSP-126-ext-14
-#PI-ZEC-154-02
-#PI-ZEC-168-02
-#PI-ZEC-181-02
-#PI-ZEC-194-02
-#PI-ZEC-205-02
-#PI-ZEC-216-02
+#1deg_jra55_iaf_omip2_cycle1
+esm-mh
 )
 
+
 for exp in ${loc_exp[@]}; do
-  ./ACCESS_Archiver.sh $arch_dir $base_dir $exp $zonal $esm $plev8 $omip
+  ./ACCESS_Archiver.sh $arch_dir $base_dir $access_version $exp
+  #./Archive_checker.sh $arch_dir $base_dir $access_version $exp
 done
 
 exit
-#cpocnice
-SSP-126-ext-05
-SSP-126-ext-07
-SSP-126-ext-08
-SSP-126-ext-09
-SSP-126-ext-10
-SSP-126-ext-11
-SSP-126-ext-12
-SSP-126-ext-13
-SSP-126-ext-14
-PI-ZEC-154-02
-PI-ZEC-168-02
-PI-ZEC-181-02
-PI-ZEC-194-02
-PI-ZEC-205-02
-PI-ZEC-216-02
