@@ -18,11 +18,17 @@ indir=$base_dir/$loc_exp
 echo "output_num cycle_num year_start year_end" > $here/tmp/$loc_exp/payu_info.csv
 
 echo "searching for history"
-for payudir in $( ls -d ${indir}/output00? ); do
-  echo $payudir
+rm -f $here/tmp/$loc_exp/payu_info.csv
+rm -f $here/tmp/$loc_exp/hist_atm_files.csv
+rm -f $here/tmp/$loc_exp/hist_ocn_files.csv
+rm -f $here/tmp/$loc_exp/hist_ice_files.csv
+#payudirs=$( find ${indir} -type d -name "output[0-9][0-9][0-9]*" -printf "%p\n" | sort )
+payudirs=$( find ${indir} -type d -name "output284" -printf "%p\n" | sort )
+for payudir in $payudirs; do
   if [[ ! -f ${payudir}/ocean/time_stamp.out ]]; then
     continue
   fi
+  echo $payudir
   yarr=()
   while IFS=' ' read -ra year; do
     yarr+=( "$( printf '%04d' $year )" )
@@ -35,7 +41,7 @@ for payudir in $( ls -d ${indir}/output00? ); do
   for atmfile in $( ls ${payudir}/atmosphere/aiihca.p* ); do
     ls $atmfile >> $here/tmp/$loc_exp/hist_atm_files.csv
   done
-  for ocnfile in $( ls ${payudir}/ocean/ocean_*.nc ); do
+  for ocnfile in $( ls ${payudir}/ocean/ocean_*.nc* ); do
     ls $ocnfile >> $here/tmp/$loc_exp/hist_ocn_files.csv
   done
   for icefile in $( ls ${payudir}/ice/ice*.nc ); do
@@ -44,11 +50,13 @@ for payudir in $( ls -d ${indir}/output00? ); do
 done
 
 echo "searching for restarts - (restart000-style)"
-for restdir in $( ls -d ${indir}/restart00? ); do
-  #echo $restdir
+rm -f $here/tmp/$loc_exp/rest_dirs.csv
+restdirs=$( find ${indir} -type d -name "restart[0-9][0-9][0-9]*" -printf "%p\n" | sort )
+for restdir in $restdirs; do
   restdirbase=`basename $restdir`
   restdirbaseval=$((10#${restdirbase//restart/}))
   if ! (( ${restdirbaseval} % 5 )) ; then
+    echo $restdir
     echo $restdir >> $here/tmp/$loc_exp/rest_dirs.csv
   fi
 done

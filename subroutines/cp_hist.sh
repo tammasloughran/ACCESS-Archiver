@@ -26,7 +26,7 @@ while IFS=, read -r file; do
     fi
   elif [ ! -f $curdir/${fname} ]; then
     echo "-- $file"
-    if [[ $file != *.nc.[0-9][0-9][0-9][0-9]-* ]]; then
+    if [[ $file != *.nc.[0-9][0-9][0-9][0-9]* ]]; then
       # check nc version
       unset nctype
       nctype=$( ncdump -k $file )
@@ -40,7 +40,7 @@ while IFS=, read -r file; do
       chmod 644 $curdir/$fname
       chgrp p66 $curdir/$fname
     else
-      if [[ $file == *.nc.0000-* ]]; then
+      if [[ $file == *.nc.0000* ]]; then
         echo "creating symlinks"
         ln -s ${file//0000/????} $curdir
       fi

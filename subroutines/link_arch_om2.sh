@@ -116,3 +116,14 @@ while IFS=, read -r file; do
   fi
 done < $here/tmp/$loc_exp/hist_ice_files.csv
 rm -f $curdir/*_tmp
+
+exit
+# restarts
+echo -e "copying $( cat $here/tmp/$loc_exp/rest_dirs.csv | wc -l ) restart cycles"
+curdir=$arch_dir/$loc_exp/restart/
+mkdir -p $curdir
+while IFS=, read -r cycle; do
+  cyclename=`basename $cycle`
+  echo "-- $cyclename"
+  ln -s $cycle $arch_dir/$loc_exp/restart/$cyclename
+done < $here/tmp/$loc_exp/rest_dirs.csv

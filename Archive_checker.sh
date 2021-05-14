@@ -30,7 +30,6 @@ echo "local exp: $expt"
 #
 #################################
 #
-mkdir -p /g/data/p66/cm2704/archive/qsubs/${expt}
 cat << EOF > $here/tmp/$expt/job_arch_check.qsub.sh 
 #!/bin/bash
 #PBS -P p66

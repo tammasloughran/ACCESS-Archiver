@@ -4,7 +4,6 @@ echo -e "\n---- Copy & cull restarts ----"
 echo $loc_exp
 echo $access_version
 
-# ocn
 echo -e "copying $( cat $here/tmp/$loc_exp/rest_dirs.csv | wc -l ) restart cycles"
 curdir=$arch_dir/$loc_exp/restart/
 mkdir -p $curdir

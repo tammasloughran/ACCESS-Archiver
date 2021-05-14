@@ -41,8 +41,8 @@ while IFS=, read -r file; do
     fname=${fname}-${ystart}1231
   fi
   if [ ! -f $curdir/${fname} ]; then
-    echo "-- $file"
-    if [[ $file != *.nc.[0-9][0-9][0-9][0-9]-* ]]; then
+    if [[ $file != *.nc.[0-9][0-9][0-9][0-9]* ]]; then
+      echo "-- $file -> $fname"
       # check nc version
       unset nctype
       nctype=$( ncdump -k $file )
@@ -56,13 +56,20 @@ while IFS=, read -r file; do
       chmod 644 $curdir/$fname
       chgrp p66 $curdir/$fname
     else
-      if [[ $file == *.nc.0000-* ]]; then
+      if [[ $file == *.nc.0000* ]]; then
         echo "creating symlinks"
-        ln -s ${file//0000/????} $curdir
+        for mpn in $( ls ${file//0000/????}); do
+          echo "  -- $mpn"
+          mpnbase=`basename $mpn`
+          ln -s ${mpn} $curdir/${mpnbase}-${ystart}1231
+        done
+        echo "completed symlinks for ${file//0000/????}"
       fi
     fi
   else
-    echo "-- $file copied already"
+    if [[ $file != *.nc.[0-9][0-9][0-9][0-9]* ]]; then
+      echo "-- $file copied already"
+    fi
   fi
 done < $here/tmp/$loc_exp/hist_ocn_files.csv
 rm -f $curdir/*_tmp

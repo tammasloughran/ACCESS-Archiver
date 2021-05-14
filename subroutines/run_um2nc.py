@@ -1,3 +1,4 @@
+
 import os, sys, collections, csv
 import multiprocessing as mp
 import um2netcdf4
@@ -38,36 +39,40 @@ def get_payu_year(file,payu_info):
 def do_plev8(outname):
     if (outname.find('.pe') != -1) or (outname.find('.pd') != -1):
         nc=nc4.Dataset(outname)
-        ncplev=nc.variables['pressure']
-        if ncplev.shape[0] == 19:
-            print('attempting plev8 conversion')
-            [dirname,basename]=os.path.split(outname)
-            os.makedirs(dirname+'/plev19_daily',exist_ok=True)
-            plev19file=dirname+'/plev19_daily/'+basename
-            plev8file=outname+'_plev8'
-            os.rename(outname,plev19file)
-            if int(ncplev[0]) in [1,100]:
-                output = sp.run(['ncks','-d','pressure,2','-d','pressure,5','-d','pressure,7','-d',\
-                    'pressure,10','-d','pressure,13','-d','pressure,15','-d','pressure,16','-d',\
-                    'pressure,18',plev19file,plev8file],capture_output=True,text=True)
-            elif int(ncplev[0]) in [100000,1000]:
-                output = sp.run(['ncks','-d','pressure,0','-d','pressure,2','-d','pressure,3','-d',\
-                    'pressure,5','-d','pressure,8','-d','pressure,11','-d','pressure,13','-d',\
-                    'pressure,16',plev19file,plev8file],capture_output=True,text=True)
+        try: 
+            ncplev=nc.variables['pressure']
+            if ncplev.shape[0] == 19:
+                print('attempting plev8 conversion')
+                [dirname,basename]=os.path.split(outname)
+                os.makedirs(dirname+'/plev19_daily',exist_ok=True)
+                plev19file=dirname+'/plev19_daily/'+basename
+                plev8file=outname+'_plev8'
+                os.rename(outname,plev19file)
+                if int(ncplev[0]) in [1,100]:
+                    output = sp.run(['ncks','-d','pressure,2','-d','pressure,5','-d','pressure,7','-d',\
+                        'pressure,10','-d','pressure,13','-d','pressure,15','-d','pressure,16','-d',\
+                        'pressure,18',plev19file,plev8file],capture_output=True,text=True)
+                elif int(ncplev[0]) in [100000,1000]:
+                    output = sp.run(['ncks','-d','pressure,0','-d','pressure,2','-d','pressure,3','-d',\
+                        'pressure,5','-d','pressure,8','-d','pressure,11','-d','pressure,13','-d',\
+                        'pressure,16',plev19file,plev8file],capture_output=True,text=True)
+                else: 
+                    print('pressure information not recognised, moving original file back')
+                    os.rename(plev19file,outname)
+                    return
+                if output.returncode != 0:
+                    print('issue; moving original file back')
+                    os.rename(plev19file,outname)
+                    return
+                else:
+                    os.replace(plev8file,outname)
+                    print('converted to plev8')
+                    return
             else: 
-                print('pressure information not recognised, moving original file back')
-                os.rename(plev19file,outname)
+                print('plev19 not found')
                 return
-            if output.returncode != 0:
-                print('issue; moving original file back')
-                os.rename(plev19file,outname)
-                return
-            else:
-                os.replace(plev8file,outname)
-                print('converted to plev8')
-                return
-        else: 
-            print('plev19 not found')
+        except:
+            print('pressure variables not found')
             return
     else: return
 
@@ -92,7 +97,7 @@ def check_um2nc(file,freq):
         print(basename, 'already netcdf, copying')
         for key in monmap.keys():
             if basename.find(key) != -1:
-                basename=basename.replace(key,monmap[key]+'001').replace('.nc','')
+                basename=basename.replace(key,monmap[key]).replace('.nc','')
         outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/'+basename+'_'+freq+'.nc'
         if not os.path.exists(outname):
             shutil.copyfile(file,outname+'_tmp')
@@ -118,12 +123,14 @@ def do_um2nc(file,freq):
         except: pass
         payu_yr=get_payu_year(file,here+'/tmp/'+loc_exp+'/payu_info.csv')
         mth=monmap[basename.split('.')[-1][-3:]]
-        outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/{}.p{}-{}0{}001_'\
+        outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/{}.p{}-{}{}_'\
             .format(loc_exp,basename.split('.')[-1][1],payu_yr,mth)+freq+'.nc'
         print(outname)
     else:
         for key in monmap.keys():
-            if basename.find(key) != -1: basename=basename.replace(key,monmap[key]+'001')
+            if basename.find(key) != -1: basename=basename.replace(key,monmap[key])
+        if basename.find('-[0-9][0-9][0-9][0-9]0[0-9][0-9]_') != -1:
+            sys.exit('fix up extra zero in ESM filenames!')
         outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/'+basename+'_'+freq+'.nc'
     try: os.remove(outname+'_tmp')
     except: pass
@@ -153,7 +160,7 @@ def do_um2nc_zonal(file,freq):
     tmpname=arch_dir+'/'+loc_exp+'/history/atm/zonal/'+basename
     for key in monmap.keys():
         if basename.find(key) != -1:
-            basename=basename.replace(key,monmap[key]+'001')
+            basename=basename.replace(key,monmap[key])
     outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/'+basename+'_'+freq+'.nc'
     try: os.remove(outname+'_tmp')
     except: pass
@@ -220,35 +227,37 @@ def main():
     print('multiprocessor sees {} cpus'.format(ncpus))
     print('zonal processing is {}'.format(zonal))
     if len(hist_atm_mon) > 0:
-        print('found '+str(len(hist_atm_mon))+' monthly atm files')
+        print('\nfound '+str(len(hist_atm_mon))+' monthly atm files')
         if ncpus == 1:
             for file in hist_atm_mon: check_um2nc(file,'mon')
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'mon') for file in hist_atm_mon))
     if len(hist_atm_dai) > 0:
-        print('found '+str(len(hist_atm_dai))+' daily atm files')
+        print('\nfound '+str(len(hist_atm_dai))+' daily atm files')
         if ncpus == 1:
             for file in hist_atm_dai: check_um2nc(file,'dai')
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'dai') for file in hist_atm_dai))
     if len(hist_atm_6hr) > 0:
-        print('found '+str(len(hist_atm_6hr))+' 6-hourly atm files')
+        print('\nfound '+str(len(hist_atm_6hr))+' 6-hourly atm files')
         if ncpus == 1:
             for file in hist_atm_6hr: check_um2nc(file,'6h')
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'6h') for file in hist_atm_6hr))
     if len(hist_atm_3hr) > 0:
-        print('found '+str(len(hist_atm_3hr))+' 3-hourly atm files')
+        print('\nfound '+str(len(hist_atm_3hr))+' 3-hourly atm files')
         if ncpus == 1:
             for file in hist_atm_3hr: check_um2nc(file,'3h')
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'3h') for file in hist_atm_3hr))
     if len(hist_atm_oth) > 0:
-        print('found '+str(len(hist_atm_oth))+' unidentified atm files (will not be converted)')
+        print('\nfound '+str(len(hist_atm_oth))+' unidentified atm files (will not be converted):')
+        for file in hist_atm_oth:
+            print(file)
     print('um2netCDF_iris complete')
 
 if __name__ == "__main__":

@@ -148,6 +148,7 @@ elif [[ $access_version == *amip ]]; then
 else
   cp $here/subroutines/cp_hist.sh $here/tmp/$loc_exp/cp_hist.sh
   cp $here/subroutines/cp_rest.sh $here/tmp/$loc_exp/cp_rest.sh
+fi
 
 #
 cat << EOF > $here/tmp/$loc_exp/job_arch.qsub.sh
