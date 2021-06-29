@@ -1,4 +1,3 @@
-
 import os, sys, collections, csv
 import multiprocessing as mp
 import um2netcdf4
@@ -195,6 +194,7 @@ def read_files(here,loc_exp):
     hist_atm_dai=[]
     hist_atm_6hr=[]
     hist_atm_3hr=[]
+    hist_atm_chem=[]
     hist_atm_oth=[]
     try:
         with open(here+'/tmp/'+loc_exp+'/hist_atm_files.csv',newline='') as csvfile:
@@ -208,17 +208,19 @@ def read_files(here,loc_exp):
                     hist_atm_6hr.append(row[0])
                 elif any(threehr in os.path.basename(row[0]) for threehr in ['.p8','.pi']):
                     hist_atm_3hr.append(row[0])
+                elif any(chem in os.path.basename(row[0]) for chem in ['.pc']):
+                    hist_atm_chem.append(row[0])
                 else: hist_atm_oth.append(row[0])
     except: print('file not found: '+here+'/tmp/'+loc_exp+'/hist_atm_files.csv')
-    hist_atm=[hist_atm_mon,hist_atm_dai,hist_atm_6hr,hist_atm_3hr,hist_atm_oth]
+    hist_atm=[hist_atm_mon,hist_atm_dai,hist_atm_6hr,hist_atm_3hr,hist_atm_chem,hist_atm_oth]
     return hist_atm
 
 def main():
     print('\n---- Run um2netCDF4 ----')
     # Read in file list from tmp/$loc_exp
     hist_atm=read_files(here,loc_exp)
-    hist_atm_mon,hist_atm_dai,hist_atm_6hr,hist_atm_3hr,hist_atm_oth=hist_atm
-    if len(hist_atm_mon)+len(hist_atm_dai)+len(hist_atm_6hr)+len(hist_atm_3hr)+len(hist_atm_oth) > 0:
+    hist_atm_mon,hist_atm_dai,hist_atm_6hr,hist_atm_3hr,hist_atm_chem,hist_atm_oth=hist_atm
+    if len(hist_atm_mon)+len(hist_atm_dai)+len(hist_atm_6hr)+len(hist_atm_3hr)+len(hist_atm_chem)+len(hist_atm_oth) > 0:
         os.makedirs(arch_dir+'/'+loc_exp+'/history/atm/netCDF',exist_ok=True)   
     else: 
         print('no atm history files found')
@@ -254,6 +256,13 @@ def main():
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'3h') for file in hist_atm_3hr))
+    if len(hist_atm_chem) > 0:
+        print('\nfound '+str(len(hist_atm_chem))+' chemistry atm files')
+        if ncpus == 1:
+            for file in hist_atm_chem: check_um2nc(file,'chem')
+        else:
+            with mp.Pool(ncpus) as pool:
+                pool.starmap(check_um2nc,((file,'chem') for file in hist_atm_chem))
     if len(hist_atm_oth) > 0:
         print('\nfound '+str(len(hist_atm_oth))+' unidentified atm files (will not be converted):')
         for file in hist_atm_oth:

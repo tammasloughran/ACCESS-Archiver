@@ -101,7 +101,7 @@ for freq in "\${!atmfreq[@]}"; do
         monmapkey=0
         for key in \${!monmap[@]}; do
           if [[ \$b == *"\${key}" ]]; then
-            newfile=\$loc/history/atm/netCDF/\${b%\${key}}"\${monmap[\${key}]}001_\${atmfreq[\$freq]}".nc
+            newfile=\$loc/history/atm/netCDF/\${b%\${key}}"\${monmap[\${key}]}_\${atmfreq[\$freq]}".nc
             monmapkey=1
           fi
         done

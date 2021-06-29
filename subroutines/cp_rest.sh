@@ -77,7 +77,7 @@ restfilescount=$( wc -l <<< "${restfiles[@]}" )
 echo -e "copying $restfilescount restart files"
 for restfile in $restfiles; do
   echo "-- $restfile"
-  link=$( readlink $restfile )
+  link=$( readlink -f $restfile )
   rsync -av $link ${restfile}_tmp
   mv ${restfile}_tmp $restfile
   chmod 644 $restfile

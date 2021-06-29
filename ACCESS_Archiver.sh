@@ -16,6 +16,8 @@ zonal=false
 # ESM CMIP6 runs only
 plev8=false
 #
+compute_proj=p66
+#
 #####################
 # GET VARS RUN FROM WRAPPER
 if [ ! -z $1 ]; then
@@ -57,10 +59,10 @@ cp $here/subroutines/run_um2nc.py $here/tmp/$loc_exp/run_um2nc.py
 #
 cat << EOF > $here/tmp/$loc_exp/job_um2nc.qsub.sh
 #!/bin/bash
-#PBS -P p66
-#PBS -l walltime=24:00:00,ncpus=24,mem=128Gb
+#PBS -P ${compute_proj}
+#PBS -l walltime=48:00:00,ncpus=24,mem=190Gb
 #PBS -l wd
-#PBS -l storage=scratch/p66+gdata/p66+gdata/hh5+gdata/access+gdata/ob22
+#PBS -l storage=scratch/p66+gdata/p66+gdata/hh5+gdata/access+gdata/ik11
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_um2nc
@@ -103,10 +105,10 @@ cp $here/subroutines/mppnccomb_check.sh $here/tmp/$loc_exp/mppnccomb_check.sh
 #
 cat << EOF > $here/tmp/$loc_exp/job_mppnc.qsub.sh
 #!/bin/bash
-#PBS -P p66
+#PBS -P ${compute_proj}
 #PBS -l walltime=48:00:00,ncpus=1,mem=12Gb
 #PBS -l wd
-#PBS -l storage=scratch/p66+gdata/p66+gdata/hh5+gdata/access+gdata/ob22
+#PBS -l storage=scratch/p66+gdata/p66+gdata/hh5+gdata/access+gdata/ik11
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_mppnc
@@ -134,9 +136,10 @@ EOF
 if [[ $access_version != om2 ]] || [[ $access_version != *amip ]]; then
   ls $here/tmp/$loc_exp/job_mppnc.qsub.sh
   chmod +x $here/tmp/$loc_exp/job_mppnc.qsub.sh
+  qsub $here/tmp/$loc_exp/job_mppnc.qsub.sh
 fi
 #----------------------------#
-
+#exit
 #---- copy job --------------#
 if [[ $access_version == *payu* ]]; then
   cp $here/subroutines/cp_hist_payu.sh $here/tmp/$loc_exp/cp_hist.sh
@@ -153,10 +156,10 @@ fi
 #
 cat << EOF > $here/tmp/$loc_exp/job_arch.qsub.sh
 #!/bin/bash
-#PBS -P p66
+#PBS -P ${compute_proj}
 #PBS -l walltime=48:00:00,ncpus=1,mem=8Gb
 #PBS -l wd
-#PBS -l storage=scratch/p66+gdata/p66+gdata/hh5+gdata/access+gdata/ik11+gdata/ob22
+#PBS -l storage=scratch/p66+gdata/p66+gdata/hh5+gdata/access+gdata/ik11
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_arch

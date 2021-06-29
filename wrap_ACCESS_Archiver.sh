@@ -10,35 +10,44 @@
 # USER SETTINGS
 
 # where to archive
-arch_dir=/g/data/p66/cm2704/archive
+arch_dir=/g/data/p66/cm2704/archive/
+#arch_dir=/scratch/p66/cm2704/archive/
 
 # above raw output directory
-#base_dir=/g/data/ik11/outputs/access-om2/
-#base_dir=/g/data/ik11/outputs/access-om2-025/
-base_dir=/scratch/p66/txz599/archive
+base_dir=/scratch/p66/txz599/archive/
+#base_dir=/scratch/p66/cm2704/archive/
+#base_dir=/scratch/p66/cm2704/ACCESS-CM2-Chem/fd0474/
+
 
 # [cm2, cm2amip, esmscript, esmpayu, om2]
 access_version=esmscript
 
 loc_exp=(
-#1deg_jra55_iaf_omip2_cycle1
-#025deg_jra55_iaf_omip2_cycle1
-SSP-370-15
-SSP-370-16
-SSP-370-17
-SSP-370-18
-SSP-370-19
-SSP-370-20
-SSP-370-21
-SSP-370-22
-SSP-370-23
-SSP-370-24
+SSP-126-35
+SSP-126-36
+SSP-126-37
+SSP-126-38
+SSP-126-39
+SSP-126-40
+SSP-126-41
+SSP-126-42
+SSP-126-43
+SSP-126-44
+SSP-245-35
+SSP-245-36
+SSP-245-37
+SSP-245-38
+SSP-245-39
+SSP-245-40
+SSP-245-41
+SSP-245-42
+SSP-245-43
+SSP-245-44
 )
 
-
 for exp in ${loc_exp[@]}; do
-  #./ACCESS_Archiver.sh $arch_dir $base_dir $access_version $exp
-  ./Archive_checker.sh $arch_dir $base_dir $access_version $exp
+  ./ACCESS_Archiver.sh $arch_dir $base_dir $access_version $exp
+  #./Archive_checker.sh $arch_dir $base_dir $access_version $exp
   #break
 done
 

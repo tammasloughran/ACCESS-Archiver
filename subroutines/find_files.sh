@@ -13,10 +13,10 @@ fi
 echo -e "\n---- Finding Files ----"
 echo -e "finding model output files in $base_dir for $loc_exp"
 
-if [[ -d $base_dir/$loc_exp/history ]] && [[ $access_version != *amip ]]; then
+if [[ -d $base_dir/$loc_exp/history ]]; then #&& [[ $access_version != *amip ]]; then
   echo "assuming standard dir structure"
   dir_struc=0
-elif [[ -d $base_dir/u-$loc_exp/share/data/History_Data ]] && [[ $access_version == *amip ]]; then
+elif [[ -d $base_dir/u-$loc_exp/share/data/History_Data ]]; then # && [[ $access_version == *amip ]]; then
   echo "assuming cylc-run dir structure; atm-only"
   dir_struc=1
 else
@@ -26,30 +26,30 @@ fi
 
 echo "searching for history"
 if [ $dir_struc == 0 ]; then
-#  find $base_dir/$loc_exp/history/atm -type f -name "${loc_exp}*.p[m,a,d,e,7,i,8,j]*" -printf "%p\n" | sort \
-  find $base_dir/$loc_exp/history/atm -name "${loc_exp}*.p[m,a,d,e,7,i,8,j]*" -printf "%p\n" | sort \
+#  find $base_dir/$loc_exp/history/atm -name "${loc_exp}*.p[m,a,d,e,7,i,8,j]*" -printf "%p\n" | sort \
+  find $base_dir/$loc_exp/history/atm -name "${loc_exp}*.p*" -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/hist_atm_files.csv
   find $base_dir/$loc_exp/history/ocn -name "ocean_*.nc*" -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/hist_ocn_files.csv
   find $base_dir/$loc_exp/history/ice -name "ice*.nc*" -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/hist_ice_files.csv
 elif [ $dir_struc == 1 ]; then
-  find $base_dir/u-$loc_exp/share/data/History_Data -name "${loc_exp}*.p[m,a,d,e,7,i,8,j]*" -printf "%p\n" | sort \
+  find $base_dir/u-$loc_exp/share/data/History_Data -name "${loc_exp}*.p*" -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/hist_atm_files.csv
 fi
 
 echo "searching for restarts"
 if [ $dir_struc == 0 ]; then
-  find $base_dir/$loc_exp/restart/atm -type f -printf "%p\n" | sort \
+  find $base_dir/$loc_exp/restart/atm/* -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/rest_atm_files.csv
-  find $base_dir/$loc_exp/restart/ocn -type f -printf "%p\n" | sort \
+  find $base_dir/$loc_exp/restart/ocn/* -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/rest_ocn_files.csv
-  find $base_dir/$loc_exp/restart/ice -type f -printf "%p\n" | sort \
+  find $base_dir/$loc_exp/restart/ice/* -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/rest_ice_files.csv
-  find $base_dir/$loc_exp/restart/cpl -type f -printf "%p\n" | sort \
+  find $base_dir/$loc_exp/restart/cpl/* -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/rest_cpl_files.csv
 elif [ $dir_struc == 1 ]; then
-  find $base_dir/u-$loc_exp/share/data/History_Data -type f -name "*.da*" -printf "%p\n" | sort \
+  find $base_dir/u-$loc_exp/share/data/History_Data/ -name "*.da*" -printf "%p\n" | sort \
       > $here/tmp/$loc_exp/rest_atm_files.csv
 fi
 
