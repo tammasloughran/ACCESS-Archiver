@@ -136,7 +136,7 @@ EOF
 if [[ $access_version != om2 ]] || [[ $access_version != *amip ]]; then
   ls $here/tmp/$loc_exp/job_mppnc.qsub.sh
   chmod +x $here/tmp/$loc_exp/job_mppnc.qsub.sh
-  qsub $here/tmp/$loc_exp/job_mppnc.qsub.sh
+  ##qsub $here/tmp/$loc_exp/job_mppnc.qsub.sh
 fi
 #----------------------------#
 #exit
