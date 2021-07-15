@@ -82,6 +82,21 @@ rm -f $curdir/*_tmp* 2>/dev/null
 while IFS=, read -r file; do
   fdir=`dirname $file`
   fname=`basename $file`
+  unset cyclenum
+  unset ystart
+  unset yend
+  determ_payu_val $fdir
+  if [[ $fname != *$ystart* ]]; then
+    if [[ $fname == ice*.????-??.nc ]]; then
+      IFS=.-
+      read -ra fnamearr <<< "$fname"
+      unset IFS
+      fname=${fnamearr[0]}.${ystart}-${fnamearr[2]}.nc
+    else
+      echo "could not determine file name: $fname"
+      continue
+    fi
+  fi
   if [ ! -f $curdir/${fname} ]; then
     echo "-- $file"
     # check nc version

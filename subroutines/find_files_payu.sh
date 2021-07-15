@@ -22,8 +22,7 @@ rm -f $here/tmp/$loc_exp/payu_info.csv
 rm -f $here/tmp/$loc_exp/hist_atm_files.csv
 rm -f $here/tmp/$loc_exp/hist_ocn_files.csv
 rm -f $here/tmp/$loc_exp/hist_ice_files.csv
-#payudirs=$( find ${indir} -type d -name "output[0-9][0-9][0-9]*" -printf "%p\n" | sort )
-payudirs=$( find ${indir} -type d -name "output284" -printf "%p\n" | sort )
+payudirs=$( find ${indir} -type d -name "output[0-9][0-9][0-9]*" -printf "%p\n" | sort )
 for payudir in $payudirs; do
   if [[ ! -f ${payudir}/ocean/time_stamp.out ]]; then
     continue
@@ -44,9 +43,15 @@ for payudir in $payudirs; do
   for ocnfile in $( ls ${payudir}/ocean/ocean_*.nc* ); do
     ls $ocnfile >> $here/tmp/$loc_exp/hist_ocn_files.csv
   done
-  for icefile in $( ls ${payudir}/ice/ice*.nc ); do
-    ls $icefile >> $here/tmp/$loc_exp/hist_ice_files.csv
-  done
+  if [ -d ${payudir}/ice/HISTORY/ ]; then 
+    for icefile in $( ls ${payudir}/ice/HISTORY/ice*.nc ); do
+      ls $icefile >> $here/tmp/$loc_exp/hist_ice_files.csv
+    done
+  else
+    for icefile in $( ls ${payudir}/ice/ice*.nc ); do
+      ls $icefile >> $here/tmp/$loc_exp/hist_ice_files.csv
+    done
+  fi
 done
 
 echo "searching for restarts - (restart000-style)"

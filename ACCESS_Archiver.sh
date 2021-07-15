@@ -1,8 +1,8 @@
 #!/bin/bash
 #####################
 #
-# This is the ACCESS Archiver, v0.1
-# 13/10/2020
+# This is the ACCESS Archiver, v1.0
+# 15/07/2021
 # 
 # Developed by Chloe Mackallah, CSIRO Aspendale
 #
@@ -16,8 +16,6 @@ zonal=false
 # ESM CMIP6 runs only
 plev8=false
 #
-compute_proj=p66
-#
 #####################
 # GET VARS RUN FROM WRAPPER
 if [ ! -z $1 ]; then
@@ -25,6 +23,7 @@ if [ ! -z $1 ]; then
   base_dir=$2
   access_version=$3
   loc_exp=$4
+  proj=$5
 else
   echo "no experiment settings"
   exit
@@ -59,10 +58,10 @@ cp $here/subroutines/run_um2nc.py $here/tmp/$loc_exp/run_um2nc.py
 #
 cat << EOF > $here/tmp/$loc_exp/job_um2nc.qsub.sh
 #!/bin/bash
-#PBS -P ${compute_proj}
+#PBS -P ${proj}
 #PBS -l walltime=48:00:00,ncpus=24,mem=190Gb
 #PBS -l wd
-#PBS -l storage=scratch/p66+gdata/p66+gdata/hh5+gdata/access+gdata/ik11
+#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_um2nc
@@ -94,7 +93,7 @@ EOF
 if [[ $access_version != om2 ]]; then
   ls $here/tmp/$loc_exp/job_um2nc.qsub.sh
   chmod +x $here/tmp/$loc_exp/job_um2nc.qsub.sh
-  qsub $here/tmp/$loc_exp/job_um2nc.qsub.sh
+  #qsub $here/tmp/$loc_exp/job_um2nc.qsub.sh
 fi
 #----------------------------#
 
@@ -105,10 +104,10 @@ cp $here/subroutines/mppnccomb_check.sh $here/tmp/$loc_exp/mppnccomb_check.sh
 #
 cat << EOF > $here/tmp/$loc_exp/job_mppnc.qsub.sh
 #!/bin/bash
-#PBS -P ${compute_proj}
+#PBS -P ${proj}
 #PBS -l walltime=48:00:00,ncpus=1,mem=12Gb
 #PBS -l wd
-#PBS -l storage=scratch/p66+gdata/p66+gdata/hh5+gdata/access+gdata/ik11
+#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_mppnc
@@ -136,7 +135,7 @@ EOF
 if [[ $access_version != om2 ]] || [[ $access_version != *amip ]]; then
   ls $here/tmp/$loc_exp/job_mppnc.qsub.sh
   chmod +x $here/tmp/$loc_exp/job_mppnc.qsub.sh
-  ##qsub $here/tmp/$loc_exp/job_mppnc.qsub.sh
+  qsub $here/tmp/$loc_exp/job_mppnc.qsub.sh
 fi
 #----------------------------#
 #exit
@@ -156,10 +155,10 @@ fi
 #
 cat << EOF > $here/tmp/$loc_exp/job_arch.qsub.sh
 #!/bin/bash
-#PBS -P ${compute_proj}
+#PBS -P ${proj}
 #PBS -l walltime=48:00:00,ncpus=1,mem=8Gb
 #PBS -l wd
-#PBS -l storage=scratch/p66+gdata/p66+gdata/hh5+gdata/access+gdata/ik11
+#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_arch
