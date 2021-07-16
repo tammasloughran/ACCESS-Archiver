@@ -5,6 +5,7 @@ if [ ! -z $1 ]; then
   origloc=$2
   access_ver=$3
   expt=$4
+  proj=$5
 else
   echo "no experiment settings"
   exit
@@ -32,10 +33,10 @@ echo "local exp: $expt"
 #
 cat << EOF > $here/tmp/$expt/job_arch_check.qsub.sh 
 #!/bin/bash
-#PBS -P p66
+#PBS -P ${proj}
 #PBS -q copyq
 #PBS -l walltime=10:00:00,ncpus=1,mem=8Gb,wd
-#PBS -l storage=gdata/access+scratch/p66+gdata/p66+gdata/hh5
+#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access
 #PBS -j oe
 #PBS -N ${expt}_arch_check
 module purge

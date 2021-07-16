@@ -11,8 +11,12 @@ module purge
 module load pbs
 #####################
 #
+# Additional NCI projects to be included in the storage flags
+addprojs=( e14 )
+#
 # CM2 DAMIP runs only
 zonal=false
+#
 # ESM CMIP6 runs only
 plev8=false
 #
@@ -33,6 +37,9 @@ fi
 here=$( pwd )
 mkdir -p $here/tmp/$loc_exp
 rm -f $here/tmp/$loc_exp/*
+for addproj in ${addprojs[@]}; do
+  addstore="${addstore}+scratch/${addproj}+gdata/${addproj}"
+done
 ####
 echo -e "\n==== ACCESS_Archiver ===="
 echo "base dir: $base_dir"
@@ -61,7 +68,7 @@ cat << EOF > $here/tmp/$loc_exp/job_um2nc.qsub.sh
 #PBS -P ${proj}
 #PBS -l walltime=48:00:00,ncpus=24,mem=190Gb
 #PBS -l wd
-#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access
+#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access${addstore}
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_um2nc
@@ -107,7 +114,7 @@ cat << EOF > $here/tmp/$loc_exp/job_mppnc.qsub.sh
 #PBS -P ${proj}
 #PBS -l walltime=48:00:00,ncpus=1,mem=12Gb
 #PBS -l wd
-#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access
+#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access${addstore}
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_mppnc
@@ -158,7 +165,7 @@ cat << EOF > $here/tmp/$loc_exp/job_arch.qsub.sh
 #PBS -P ${proj}
 #PBS -l walltime=48:00:00,ncpus=1,mem=8Gb
 #PBS -l wd
-#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access
+#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access${addstore}
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_arch
