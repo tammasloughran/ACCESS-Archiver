@@ -24,4 +24,5 @@ Three PBS jobs are then created:
 ## Archive_checker.sh
 
 This script will (independently of the file lists in *tmp/*) check that all model output files from the target experiment have been copied, along with some basic metadata checks in the case of corrupted files. Currently only supported for CM2, CM2-amip, and ESM1.5-script.
+This is called from *wrap_ACCESS_Archiver.sh* by altering the loop at the end.
 
