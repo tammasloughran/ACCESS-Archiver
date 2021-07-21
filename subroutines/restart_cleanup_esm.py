@@ -110,6 +110,9 @@ if not args.noocn:
     # Ocean files all have dates corresonding to end of run.
     # use temp_salt as a model for the rest
     files = sorted(restartdir.joinpath('ocn').glob("ocean_temp_salt.res.nc-[0-9]*"))
+    if len(files) == 0:
+        files=sorted(restartdir.joinpath('ocn').glob("restart-[0-9]*.tar"))
+        ocntar=True
     #files = sorted(restartdir.joinpath('ocn').glob("csiro_bgc.res.nc-[0-9]*"))
     flist = list(files)[1:-keeplast]
     # Remove anything that's not 1231
@@ -119,6 +122,13 @@ if not args.noocn:
             if args.decadal_start >= 0:
                 # Remove everything where year%10 != decadal_start
                 y = int(f.name[-8:-4])
+                # Use y+1 here to match the atm years
+                if (y+1)%10 != args.decadal_start and y+1 not in args.exclude:
+                    rlist.append(f)
+        elif f.name.endswith('1231.tar'):
+            if args.decadal_start >= 0:
+                # Remove everything where year%10 != decadal_start
+                y = int(f.name[-12:-8])
                 # Use y+1 here to match the atm years
                 if (y+1)%10 != args.decadal_start and y+1 not in args.exclude:
                     rlist.append(f)
@@ -135,9 +145,13 @@ if not args.noocn:
     # ocean_temp_salt.res.nc-YYYYMMDD
     rlistall = []
     for f in rlist:
-        suffix = f.name[-8:]
-        rlistall += sorted(restartdir.joinpath('ocn').glob("ocean*" + suffix))
-        rlistall += sorted(restartdir.joinpath('ocn').glob("csiro*" + suffix))
+        if ocntar: 
+            suffix = f.name[-12:]
+            rlistall += sorted(restartdir.joinpath('ocn').glob("restart*" + suffix))
+        else:
+            suffix = f.name[-8:]
+            rlistall += sorted(restartdir.joinpath('ocn').glob("ocean*" + suffix))
+            rlistall += sorted(restartdir.joinpath('ocn').glob("csiro*" + suffix))
     if args.verbose > 1:
         print("Full list to remove\n", [f.name for f in rlistall])
 

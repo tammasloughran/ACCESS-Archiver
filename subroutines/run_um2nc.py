@@ -6,6 +6,7 @@ import mule
 import shutil
 import string
 import netCDF4 as nc4
+import re
 
 try: ncpus=int(os.environ.get('ncpus'))
 except: ncpus=1
@@ -128,9 +129,15 @@ def do_um2nc(file,freq):
     else:
         for key in monmap.keys():
             if basename.find(key) != -1: basename=basename.replace(key,monmap[key])
-        if basename.find('-[0-9][0-9][0-9][0-9]0[0-9][0-9]_') != -1:
-            sys.exit('fix up extra zero in ESM filenames!')
+        #if basename.find('-[0-9][0-9][0-9][0-9]0[0-9][0-9]_') != -1:
+        if re.compile('-[0-9][0-9][0-9][0-9]0[0-9][0-9]001').search(basename) is not None:
+            testname=basename.split('-')
+            testyear=testname[-1][:4]
+            testmonth=testname[-1][5:7]
+            psplit=basename.split('.p')
+            basename=psplit[0]+'.p'+psplit[1][0]+testyear+testmonth
         outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/'+basename+'_'+freq+'.nc'
+        #print(outname)
     try: os.remove(outname+'_tmp')
     except: pass
     try: os.remove(outname.replace('.nc','')+'_lbvc9-fixed')
@@ -231,7 +238,9 @@ def main():
     if len(hist_atm_mon) > 0:
         print('\nfound '+str(len(hist_atm_mon))+' monthly atm files')
         if ncpus == 1:
-            for file in hist_atm_mon: check_um2nc(file,'mon')
+            for file in hist_atm_mon: 
+                check_um2nc(file,'mon')
+                sys.exit()
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'mon') for file in hist_atm_mon))

@@ -12,7 +12,7 @@ module load pbs
 #####################
 #
 # Additional NCI projects to be included in the storage flags
-addprojs=( e14 )
+addprojs=(  )
 #
 # CM2 DAMIP runs only
 zonal=false
@@ -100,7 +100,7 @@ EOF
 if [[ $access_version != om2 ]]; then
   ls $here/tmp/$loc_exp/job_um2nc.qsub.sh
   chmod +x $here/tmp/$loc_exp/job_um2nc.qsub.sh
-  #qsub $here/tmp/$loc_exp/job_um2nc.qsub.sh
+  qsub $here/tmp/$loc_exp/job_um2nc.qsub.sh
 fi
 #----------------------------#
 
@@ -142,7 +142,7 @@ EOF
 if [[ $access_version != om2 ]] || [[ $access_version != *amip ]]; then
   ls $here/tmp/$loc_exp/job_mppnc.qsub.sh
   chmod +x $here/tmp/$loc_exp/job_mppnc.qsub.sh
-  qsub $here/tmp/$loc_exp/job_mppnc.qsub.sh
+  #qsub $here/tmp/$loc_exp/job_mppnc.qsub.sh
 fi
 #----------------------------#
 #exit

@@ -1,0 +1,21 @@
+
+==== ACCESS_Archiver -- mppnccombine ====
+base dir: /scratch/p66/txz599/archive/
+arch dir: /scratch/p66/cm2704/archive/
+local exp: PI-C-rev-01
+access version: esmscript
+
+---- Checking for mppnccombine ----
+
+======================================================================================
+                  Resource Usage on 2021-07-17 01:12:48:
+   Job Id:             25678671.gadi-pbs
+   Project:            p66
+   Exit Status:        0
+   Service Units:      0.01
+   NCPUs Requested:    1                      NCPUs Used: 1               
+                                           CPU Time Used: 00:00:01                                   
+   Memory Requested:   12.0GB                Memory Used: 35.57MB         
+   Walltime requested: 48:00:00            Walltime Used: 00:00:03        
+   JobFS requested:    100.0MB                JobFS used: 0B              
+======================================================================================
