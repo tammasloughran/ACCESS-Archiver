@@ -107,6 +107,12 @@ for freq in "\${!atmfreq[@]}"; do
           fi
         done
         if [[ \$monmapkey == 0 ]]; then
+          if [[ "\$b" == *.p?-[0-9][0-9][0-9][0-9]0[0-9][0-9]001 ]]; then
+            b=\${b::-3}
+            sb=\${b::-3}
+            eb=\${b: -2}
+            b="\${sb}\${eb}"
+          fi
           newfile=\$loc/history/atm/netCDF/\${b}"_\${atmfreq[\$freq]}".nc
         fi
         #echo "newfile: \$newfile"
@@ -147,7 +153,7 @@ for freq in "\${!atmfreq[@]}"; do
           atmmissing=\$((atmmissing+1))
         fi
         count=\$((count+1))
-      done  
+        done  
     else
       echo "   no \${atmfreq[\$freq]} atm files"
     fi
