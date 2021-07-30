@@ -16,12 +16,18 @@ atm=1
 ocn=1
 ice=1
 #
+# Additional NCI projects to be included in the storage flags
+addprojs=( ob22 )
+#
 ################################
 # FIXED SETTINGS
 #here=$( pwd )
 here=/g/data/p66/cm2704/ACCESS-Archiver
 mkdir -p $here/tmp/$expt
 rm -f $here/tmp/$expt/job_arch_check.qsub.sh 
+for addproj in ${addprojs[@]}; do
+  addstore="${addstore}+scratch/${addproj}+gdata/${addproj}"
+done
 ####
 echo -e "\n==== ACCESS_Archiver ===="
 echo "orig dir: $origloc"
@@ -36,7 +42,7 @@ cat << EOF > $here/tmp/$expt/job_arch_check.qsub.sh
 #PBS -P ${proj}
 #PBS -q copyq
 #PBS -l walltime=10:00:00,ncpus=1,mem=8Gb,wd
-#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access
+#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access${addstore}
 #PBS -j oe
 #PBS -N ${expt}_arch_check
 module purge
@@ -66,7 +72,7 @@ echo "original loc: \$origloc"
 echo "expt loc: \$loc"
 
 declare -A atmfreq=( ["[m,a]"]="mon" ["[d,e]"]="dai" ["[7,j]"]="6h" ["[8,i]"]="3h" )
-#declare -A atmfreq=( ["[d,e]"]="dai" )
+#declare -A atmfreq=( ["[m,a]"]="mon" )
 
 declare -A monmap=( ["jan"]="01" ["feb"]="02" ["mar"]="03" ["apr"]="04" ["may"]="05" ["jun"]="06"\
     ["jul"]="07" ["aug"]="08" ["sep"]="09" ["oct"]="10" ["nov"]="11" ["dec"]="12" )
@@ -78,9 +84,11 @@ for freq in "\${!atmfreq[@]}"; do
     atmbad=0
     atmmissing=0
     if [[ $access_ver == cm2 ]] || [[ $access_ver == esmscript ]]; then
-      atmfind=\$( find \${origloc}/\${expt}/history/atm/ -type f -name "*.p"\$freq"*" -printf "%p\n" | sort )
+      atmfind=\$( find \${origloc}/\${expt}/history/atm/ -maxdepth 1 -type f -name "*.p"\$freq"*" -printf "%p\n" | sort )
     elif [[ $access_ver == cm2amip ]]; then
-      atmfind=\$( find \${origloc}/u-\${expt}/share/data/History_Data -type f -name "*.p"\$freq"*" -printf "%p\n" | sort )
+      atmfind=\$( find \${origloc}/u-\${expt}/share/data/History_Data/ -maxdepth 1 -type f -name "*.p"\$freq"*" -printf "%p\n" | sort )
+    elif [[ $access_ver == *payu ]]; then
+      atmfind=\$( find \${origloc}/\${expt}/output*/atmosphere/ -maxdepth 1 -type f -name "aiihca.p"\$freq"*" -printf "%p\n" | sort )
     else
       echo "ACCESS version $access_ver not included in Archive_checker yet!"
       exit
@@ -99,23 +107,48 @@ for freq in "\${!atmfreq[@]}"; do
         elif [[ \$b == *.nc ]]; then
           b=\${b//.nc}
         fi
-        monmapkey=0
-        for key in \${!monmap[@]}; do
-          if [[ \$b == *"\${key}" ]]; then
-            newfile=\$loc/history/atm/netCDF/\${b%\${key}}"\${monmap[\${key}]}_\${atmfreq[\$freq]}".nc
-            monmapkey=1
+        if [[ $access_ver == *payu ]]; then
+          dir=\$(dirname \$origfile)
+          timestampfile="\$dir"/../ocean/time_stamp.out
+          if [ ! -f \$timestampfile ]; then
+            echo "ERR: no time stamp file for \$origfile"
+            atmbad=\$((atmbad+1))
+            continue
           fi
-        done
-        if [[ \$monmapkey == 0 ]]; then
-          if [[ "\$b" == *.p?-[0-9][0-9][0-9][0-9]0[0-9][0-9]001 ]]; then
-            b=\${b::-3}
-            sb=\${b::-3}
-            eb=\${b: -2}
-            b="\${sb}\${eb}"
+          yarr=()
+          while IFS=' ' read -ra year; do
+            yarr+=( "\$( printf '%04d' \$year )" )
+          done < "\$timestampfile"
+          payuyr=\${yarr[0]}
+          freqind=\${b#aiihca.p}
+          freqind=\${freqind:0:1}
+          for key in \${!monmap[@]}; do
+            if [[ \$b == *"\${key}" ]]; then
+              monind=\${monmap[\${key}]}
+            fi
+          done
+          newfile=\$loc/history/atm/netCDF/\${expt}.p\${freqind}-\${payuyr}\${monind}_\${atmfreq[\$freq]}.nc
+        else
+          monmapkey=0
+          for key in \${!monmap[@]}; do
+            if [[ \$b == *"\${key}" ]]; then
+              newfile=\$loc/history/atm/netCDF/\${b%\${key}}"\${monmap[\${key}]}_\${atmfreq[\$freq]}".nc
+              monmapkey=1
+            fi
+          done
+          if [[ \$monmapkey == 0 ]]; then
+            if [[ "\$b" == *.p?-[0-9][0-9][0-9][0-9]0[0-9][0-9]001 ]]; then
+              b=\${b::-3}
+              sb=\${b::-3}
+              eb=\${b: -2}
+              b="\${sb}\${eb}"
+            fi
+            newfile=\$loc/history/atm/netCDF/\${b}"_\${atmfreq[\$freq]}".nc
           fi
-          newfile=\$loc/history/atm/netCDF/\${b}"_\${atmfreq[\$freq]}".nc
         fi
         #echo "newfile: \$newfile"
+        #exit
+        #
         if [ -e "\$newfile" ]; then
           if [[ "\$count" == 120 ]] || [[ "\$count" == 0 ]]; then
             #echo "new comparison file"
@@ -137,7 +170,7 @@ for freq in "\${!atmfreq[@]}"; do
               atmok=\$((atmok+1))
             else
               echo "caution! meta does not match, new comparison file"
-              echo "   \$(basename \$newfile) (original: \$(basename \$origfile))"
+              echo "   \$(basename \$newfile) (original: \$origfile)"
               compfile=\$newfile
               ncks -m \$compfile > \$loc/tmp_comp.txt
               sed -i '/UNLIMITED/d' \$loc/tmp_comp.txt
@@ -149,11 +182,11 @@ for freq in "\${!atmfreq[@]}"; do
           fi
         else
           echo "caution: missing file!"
-          echo "   \$(basename \$newfile) (original: \$(basename \$origfile))"
+          echo "   \$(basename \$newfile) (original: \$origfile)"
           atmmissing=\$((atmmissing+1))
         fi
         count=\$((count+1))
-        done  
+        done
     else
       echo "   no \${atmfreq[\$freq]} atm files"
     fi
@@ -177,7 +210,11 @@ if [[ "\$ocn" == 1 ]]; then
   ocnok=0
   ocnbad=0
   ocnmissing=0
-  ocnfind=\$( find \${origloc}/\${expt}/history/ocn/ -type f -name "ocean*.nc*" -printf "%p\n" | sort )
+  if [[ $access_ver == *payu ]]; then
+    ocnfind=\$( find \${origloc}/\${expt}/output*/ocean -type f -name "ocean_*.nc*" -printf "%p\n" | sort )
+  else
+    ocnfind=\$( find \${origloc}/\${expt}/history/ocn/ -type f -name "ocean*.nc*" -printf "%p\n" | sort )
+  fi
   if [ "\${ocnfind}" != "" ]; then
     for origfile in \${ocnfind}; do
       b=\$(basename \$origfile)
@@ -185,17 +222,39 @@ if [[ "\$ocn" == 1 ]]; then
         echo "\$b is hidden, skipping"
         continue
       fi
-      newfile=\$loc/history/ocn/\${b}
+      if [[ $access_ver == *payu ]]; then
+        dir=\$(dirname \$origfile)
+        timestampfile="\$dir"/time_stamp.out
+        if [ ! -f \$timestampfile ]; then
+          echo "ERR: no time stamp file for \$origfile"
+          continue
+        fi
+        yarr=()
+        while IFS=' ' read -ra year; do
+          yarr+=( "\$( printf '%04d' \$year )" )
+        done < "\$timestampfile"
+        payuyr=\${yarr[0]}
+        if [[ \$b != *\$payuyr* ]]; then
+          newfile=\$loc/history/ocn/\${b}\-\${payuyr}1231
+        fi
+      else
+        newfile=\$loc/history/ocn/\${b}
+      fi
       if [[ \$newfile == *.nc.[0-9][0-9][0-9][0-9]* ]]; then
         if [[ \$newfile == *.nc.0000* ]]; then
-          mppnfile=\${newfile%.*}
-          IFS=- read tmp DATE <<< \$b
-          newfile=\$mppnfile-\${DATE}
+          if [[ $access_ver == *payu ]]; then
+            newfile=\${newfile//.0000/}
+          else
+            #mppnfile=\${newfile%.*}
+            #IFS=- read tmp DATE <<< \$b
+            #newfile=\$mppnfile-\${DATE}
+            newfile=\${newfile//.0000/}
+          fi
           if [ -e "\$newfile" ]; then
             ocnok=\$((ocnok+1))
           else
             echo "caution: missing file!"
-            echo "   \$(basename \$newfile) (original: \$(basename \$origfile))"
+            echo "   \$(basename \$newfile) (original: \$origfile)"
             ocnmissing=\$((ocnmissing+1))
           fi
         fi
@@ -204,17 +263,17 @@ if [[ "\$ocn" == 1 ]]; then
           if nccmpout=\$( nccmp --warn=format -BNmq \$newfile \$origfile ); then
             ocnok=\$((ocnok+1))
           else
-            if [ -e "\${newfile//.nc-/.nc.0000-}" ]; then
+            if [ -e "\${origfile//.nc/.nc.0000}" ]; then
               ocnok=\$((ocnok+1))
             else
               echo "caution: bad file!"
-              echo "   \$(basename \$newfile) (original: \$(basename \$origfile))"
+              echo "   \$(basename \$newfile) (original: \$origfile)"
               ocnbad=\$((ocnbad+1))
             fi
           fi
         else
           echo "caution: missing file!"
-          echo "   \$(basename \$newfile) (original: \$(basename \$origfile))"
+          echo "   \$(basename \$newfile) (original: \$origfile)"
           ocnmissing=\$((ocnmissing+1))
         fi
       fi
@@ -238,7 +297,11 @@ if [[ "\$ice" == 1 ]]; then
   iceok=0
   icebad=0
   icemissing=0
-  icefind=\$( find \${origloc}/\${expt}/history/ice/ -type f -name "iceh*" -printf "%p\n" | sort )
+  if [[ $access_ver == *payu ]]; then
+    icefind=\$( find \${origloc}/\${expt}/output*/ice/ -type f -name "ice*.nc" -printf "%p\n" | sort )
+  else
+    icefind=\$( find \${origloc}/\${expt}/history/ice/ -type f -name "iceh*" -printf "%p\n" | sort )
+  fi
   if [ "\${icefind}" != "" ]; then
     for origfile in \${icefind}; do
       b=\$(basename \$origfile)
@@ -246,7 +309,31 @@ if [[ "\$ice" == 1 ]]; then
         echo "\$b is hidden, skipping"
         continue
       fi
-      newfile=\$loc/history/ice/\${b}
+      if [[ $access_ver == *payu ]]; then
+        dir=\$(dirname \$origfile)
+        timestampfile="\$dir"/../ocean/time_stamp.out
+        if [ ! -f \$timestampfile ]; then
+          echo "ERR: no time stamp file for \$origfile"
+          continue
+        fi
+        yarr=()
+        while IFS=' ' read -ra year; do
+          yarr+=( "\$( printf '%04d' \$year )" )
+        done < "\$timestampfile"
+        payuyr=\${yarr[0]}
+        if [[ \$b != *\$payuyr* ]]; then
+          if [[ \$b == ice*.????-??.nc ]]; then
+            IFS=.-
+            read -ra fnamearr <<< "\$b"
+            unset IFS
+            newfile=\$loc/history/ice/\${fnamearr[0]}.\${payuyr}-\${fnamearr[2]}.nc
+          fi
+        else
+          newfile=\$loc/history/ice/\${b}
+        fi
+      else
+        newfile=\$loc/history/ice/\${b}
+      fi
       if [ -e "\$newfile" ]; then
         if nccmpout=\$( nccmp --warn=format -BNmq \$newfile \$origfile ); then
           iceok=\$((iceok+1))
@@ -254,12 +341,12 @@ if [[ "\$ice" == 1 ]]; then
           iceok=\$((iceok+1))
         else
           echo "caution: bad file!"
-          echo "   \$(basename \$newfile) (original: \$(basename \$origfile))"
+          echo "   \$(basename \$newfile) (original: \$origfile)"
           icebad=\$((icebad+1))
         fi  
       else
         echo "caution: missing file!"
-        echo "   \$(basename \$newfile) (original: \$(basename \$origfile))"
+        echo "   \$(basename \$newfile) (original: \$origfile)"
         icemissing=\$((icemissing+1))
       fi
     done
