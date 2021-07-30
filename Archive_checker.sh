@@ -17,7 +17,7 @@ ocn=1
 ice=1
 #
 # Additional NCI projects to be included in the storage flags
-addprojs=( ob22 )
+addprojs=(  )
 #
 ################################
 # FIXED SETTINGS
