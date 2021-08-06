@@ -15,6 +15,8 @@ base_dir=os.environ.get('base_dir')
 arch_dir=os.environ.get('arch_dir')
 loc_exp=os.environ.get('loc_exp')
 access_version=os.environ.get('access_version')
+if os.environ.get('ncexists').lower() in ['true','yes','1']: ncexists=True
+else: ncexists=False
 if os.environ.get('zonal').lower() in ['true','yes','1']: zonal=True
 else: zonal=False
 if os.environ.get('plev8').lower() in ['true','yes','1']: plev8=True
@@ -94,21 +96,22 @@ def check_um2nc(file,freq):
         if plev8: do_plev8(file)
         sys.stdout.flush()
     elif basename.find('.nc') != -1:
-        print(basename, 'already netcdf, copying')
-        for key in monmap.keys():
-            if basename.find(key) != -1:
-                basename=basename.replace(key,monmap[key]).replace('.nc','')
-        outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/'+basename+'_'+freq+'.nc'
-        if not os.path.exists(outname):
-            shutil.copyfile(file,outname+'_tmp')
-            os.replace(outname+'_tmp',outname)
-            if plev8: do_plev8(outname)
-            os.chmod(outname,0o644)
-        else: 
-            print(basename+': file already exists')
-        sys.stdout.flush()
+        if ncexists:
+            print(basename, 'already netcdf, copying')
+            for key in monmap.keys():
+                if basename.find(key) != -1:
+                    basename=basename.replace(key,monmap[key]).replace('.nc','')
+            outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/'+basename+'_'+freq+'.nc'
+            if not os.path.exists(outname):
+                shutil.copyfile(file,outname+'_tmp')
+                os.replace(outname+'_tmp',outname)
+                if plev8: do_plev8(outname)
+                os.chmod(outname,0o644)
+            else: 
+                print(basename+': file already exists')
+            sys.stdout.flush()
     else:
-        if os.path.exists(file+'.nc'):
+        if os.path.exists(file+'.nc') and ncexists:
             print(basename, 'nc file exists, skipping')
             sys.stdout.flush()
         else:
@@ -125,17 +128,16 @@ def do_um2nc(file,freq):
         mth=monmap[basename.split('.')[-1][-3:]]
         outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/{}.p{}-{}{}_'\
             .format(loc_exp,basename.split('.')[-1][1],payu_yr,mth)+freq+'.nc'
-        print(outname)
+        #print(outname)
     else:
         for key in monmap.keys():
             if basename.find(key) != -1: basename=basename.replace(key,monmap[key])
-        #if basename.find('-[0-9][0-9][0-9][0-9]0[0-9][0-9]_') != -1:
         if re.compile('-[0-9][0-9][0-9][0-9]0[0-9][0-9]001').search(basename) is not None:
             testname=basename.split('-')
             testyear=testname[-1][:4]
             testmonth=testname[-1][5:7]
             psplit=basename.split('.p')
-            basename=psplit[0]+'.p'+psplit[1][0]+testyear+testmonth
+            basename=psplit[0]+'.p'+psplit[1][0]+'-'+testyear+testmonth
         outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/'+basename+'_'+freq+'.nc'
         #print(outname)
     try: os.remove(outname+'_tmp')
@@ -143,7 +145,7 @@ def do_um2nc(file,freq):
     try: os.remove(outname.replace('.nc','')+'_lbvc9-fixed')
     except: pass
     if not os.path.exists(outname):
-        print(basename)
+        print(outname)
         if access_version.find('esm') != -1:
             lbvc9=fix_esm_lbvc9(file,outname)
             if lbvc9: 

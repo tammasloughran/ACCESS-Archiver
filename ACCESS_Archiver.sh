@@ -20,6 +20,10 @@ zonal=false
 # ESM CMIP6 runs only
 plev8=false
 #
+# True: Use netcdf version of file if it exists
+# False: Always use UM pp-file, whether or not netcdf version exists
+ncexists=false
+#
 #####################
 # GET VARS RUN FROM WRAPPER
 if [ ! -z $1 ]; then
@@ -86,6 +90,7 @@ export loc_exp=$loc_exp
 export zonal=$zonal
 export access_version=$access_version
 export plev8=$plev8
+export ncexists=$ncexists
 export UMDIR=/projects/access/umdir
 
 echo -e "\n==== ACCESS_Archiver -- um2netcdf_iris ===="

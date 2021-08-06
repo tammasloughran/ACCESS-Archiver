@@ -110,11 +110,8 @@ if not args.noocn:
     # Ocean files all have dates corresonding to end of run.
     # use temp_salt as a model for the rest
     files = sorted(restartdir.joinpath('ocn').glob("ocean_temp_salt.res.nc-[0-9]*"))
-    if len(files) == 0:
-        files=sorted(restartdir.joinpath('ocn').glob("restart-[0-9]*.tar"))
-        ocntar=True
-    #files = sorted(restartdir.joinpath('ocn').glob("csiro_bgc.res.nc-[0-9]*"))
-    flist = list(files)[1:-keeplast]
+    tarfiles=sorted(restartdir.joinpath('ocn').glob("restart-[0-9]*.tar"))
+    flist = list(files)[1:-keeplast] + list(tarfiles)[1:-keeplast]
     # Remove anything that's not 1231
     rlist = []
     for f in flist:
@@ -145,7 +142,7 @@ if not args.noocn:
     # ocean_temp_salt.res.nc-YYYYMMDD
     rlistall = []
     for f in rlist:
-        if ocntar: 
+        if f.name.endswith('.tar'): 
             suffix = f.name[-12:]
             rlistall += sorted(restartdir.joinpath('ocn').glob("restart*" + suffix))
         else:
