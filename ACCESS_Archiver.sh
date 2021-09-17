@@ -10,21 +10,6 @@
 module purge
 module load pbs
 #####################
-#
-# Additional NCI projects to be included in the storage flags
-addprojs=(  )
-#
-# CM2 DAMIP runs only
-zonal=false
-#
-# ESM CMIP6 runs only
-plev8=false
-#
-# True: Use netcdf version of file if it exists
-# False: Always use UM pp-file, whether or not netcdf version exists
-ncexists=false
-#
-#####################
 # GET VARS RUN FROM WRAPPER
 if [ ! -z $1 ]; then
   arch_dir=$1
@@ -36,6 +21,24 @@ else
   echo "no experiment settings"
   exit
 fi
+#####################
+#
+# Additional NCI projects to be included in the storage flags
+addprojs=( p73 )
+#
+# CM2 DAMIP runs only
+zonal=false
+if [[ $access_version == *chem ]]; then
+  zonal=true
+fi
+#
+# ESM CMIP6 runs only
+plev8=false
+#
+# True: Use netcdf version of file if it exists
+# False: Always use UM pp-file, whether or not netcdf version exists
+ncexists=false
+#
 #####################
 # FIXED SETTINGS
 here=$( pwd )
@@ -144,7 +147,7 @@ echo "access version: $access_version"
 $here/tmp/$loc_exp/mppnccomb_check.sh
 
 EOF
-if [[ $access_version != om2 ]] || [[ $access_version != *amip ]]; then
+if [[ $access_version != om2 ]] || [[ $access_version != *amip ]] || [[ $access_version != *chem ]]; then
   ls $here/tmp/$loc_exp/job_mppnc.qsub.sh
   chmod +x $here/tmp/$loc_exp/job_mppnc.qsub.sh
   #qsub $here/tmp/$loc_exp/job_mppnc.qsub.sh
@@ -157,7 +160,7 @@ if [[ $access_version == *payu* ]]; then
   cp $here/subroutines/cp_rest_payu.sh $here/tmp/$loc_exp/cp_rest.sh
 elif [[ $access_version == om2 ]]; then
   cp $here/subroutines/link_arch_om2.sh $here/tmp/$loc_exp/link_arch_om2.sh
-elif [[ $access_version == *amip ]]; then
+elif [[ $access_version == *amip ]] || [[ $access_version == *chem ]]; then
   cp $here/subroutines/cp_rest.sh $here/tmp/$loc_exp/cp_rest.sh
 else
   cp $here/subroutines/cp_hist.sh $here/tmp/$loc_exp/cp_hist.sh
@@ -196,7 +199,7 @@ echo "access version: $access_version"
 
 if [[ $access_version == om2 ]]; then
   $here/tmp/$loc_exp/link_arch_om2.sh
-elif [[ $access_version == *amip ]]; then
+elif [[ $access_version == *amip ]] || [[ $access_version == *chem ]]; then
   $here/tmp/$loc_exp/cp_rest.sh
 else
   $here/tmp/$loc_exp/cp_hist.sh

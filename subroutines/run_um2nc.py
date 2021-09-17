@@ -90,6 +90,7 @@ def fix_esm_lbvc9(file,outname):
     return lbvc9
 
 def check_um2nc(file,freq):
+    print(file)
     basename=os.path.basename(file)
     if arch_dir == base_dir:
         print(basename+': already archived')
@@ -116,7 +117,14 @@ def check_um2nc(file,freq):
             sys.stdout.flush()
         else:
             print(basename, 'needs converting, um2ncing')
-            if zonal and (freq == 'dai'): do_um2nc_zonal(file,freq)
+            if zonal: 
+                #do_um2nc_zonal(file,freq)
+                if access_version.find('chem') != -1:
+                    if freq == 'dai': do_um2nc_zonal(file,freq)
+                    else: do_um2nc(file,freq)
+                else:
+                    if freq == 'dai': do_um2nc_zonal(file,freq)
+                    else: do_um2nc(file,freq)
             else: do_um2nc(file,freq)
     
 def do_um2nc(file,freq):
@@ -156,6 +164,11 @@ def do_um2nc(file,freq):
         os.replace(outname+'_tmp',outname)
         if plev8: do_plev8(outname)
         os.chmod(outname,0o644)
+        try: 
+            if os.path.getsize(outname) < 1024:
+                print('removing empty file: ',outname)
+                os.remove(outname)
+        except: pass
         sys.stdout.flush()
     else: 
         print(basename+': file already exists')
@@ -187,11 +200,23 @@ def do_um2nc_zonal(file,freq):
             os.replace(outname+"_zonal_tmp",outname+"_zonal")
             os.chmod(outname+"_zonal",0o644)
         except: print('no zonal data')
-        um2netcdf4.process(tmpname+"_nonzonal",outname+'_tmp',args)
+        try:
+            um2netcdf4.process(tmpname+"_nonzonal",outname+'_tmp',args)
+            os.replace(outname+'_tmp',outname)
+            os.chmod(outname,0o644)
+        except: print('no nonzonal data')
         os.remove(tmpname+"_nonzonal")
         os.remove(tmpname+"_zonal")
-        os.replace(outname+'_tmp',outname)
-        os.chmod(outname,0o644)
+        try: 
+            if os.path.getsize(outname) < 1024:
+                print('removing empty file: ',outname)
+                os.remove(outname)
+        except: pass
+        try:
+            if os.path.getsize(outname+"_zonal") < 1024:
+                print('removing empty file: ',outname+"_zonal")
+                os.remove(outname+"_zonal")
+        except: pass
         sys.stdout.flush()
     else: 
         print(basename+': file already exists')
@@ -203,33 +228,40 @@ def read_files(here,loc_exp):
     hist_atm_dai=[]
     hist_atm_6hr=[]
     hist_atm_3hr=[]
-    hist_atm_chem=[]
+    hist_atm_dai10=[]
     hist_atm_oth=[]
     try:
         with open(here+'/tmp/'+loc_exp+'/hist_atm_files.csv',newline='') as csvfile:
             read=csv.reader(csvfile)
             for row in read:
-                if any(mon in os.path.basename(row[0]) for mon in ['.pm','.pa']):
-                    hist_atm_mon.append(row[0])
-                elif any(dai in os.path.basename(row[0]) for dai in ['.pd','.pe']):
-                    hist_atm_dai.append(row[0])
-                elif any(sixhr in os.path.basename(row[0]) for sixhr in ['.p7','.pj']):
-                    hist_atm_6hr.append(row[0])
-                elif any(threehr in os.path.basename(row[0]) for threehr in ['.p8','.pi']):
-                    hist_atm_3hr.append(row[0])
-                elif any(chem in os.path.basename(row[0]) for chem in ['.pc']):
-                    hist_atm_chem.append(row[0])
-                else: hist_atm_oth.append(row[0])
+                if access_version.find('chem') != -1:
+                    if any(mon in os.path.basename(row[0]) for mon in ['.pm','.pa']):
+                        hist_atm_mon.append(row[0])
+                    elif any(dai in os.path.basename(row[0]) for dai in ['.pd','.pc']):
+                        hist_atm_dai.append(row[0])
+                    elif any(dai10 in os.path.basename(row[0]) for dai10 in ['.pe']):
+                        hist_atm_dai10.append(row[0])
+                    else: hist_atm_oth.append(row[0])
+                else:
+                    if any(mon in os.path.basename(row[0]) for mon in ['.pm','.pa']):
+                        hist_atm_mon.append(row[0])
+                    elif any(dai in os.path.basename(row[0]) for dai in ['.pd','.pe']):
+                        hist_atm_dai.append(row[0])
+                    elif any(sixhr in os.path.basename(row[0]) for sixhr in ['.p7','.pj']):
+                        hist_atm_6hr.append(row[0])
+                    elif any(threehr in os.path.basename(row[0]) for threehr in ['.p8','.pi']):
+                        hist_atm_3hr.append(row[0])
+                    else: hist_atm_oth.append(row[0])
     except: print('file not found: '+here+'/tmp/'+loc_exp+'/hist_atm_files.csv')
-    hist_atm=[hist_atm_mon,hist_atm_dai,hist_atm_6hr,hist_atm_3hr,hist_atm_chem,hist_atm_oth]
+    hist_atm=[hist_atm_mon,hist_atm_dai,hist_atm_6hr,hist_atm_3hr,hist_atm_dai10,hist_atm_oth]
     return hist_atm
 
 def main():
     print('\n---- Run um2netCDF4 ----')
     # Read in file list from tmp/$loc_exp
     hist_atm=read_files(here,loc_exp)
-    hist_atm_mon,hist_atm_dai,hist_atm_6hr,hist_atm_3hr,hist_atm_chem,hist_atm_oth=hist_atm
-    if len(hist_atm_mon)+len(hist_atm_dai)+len(hist_atm_6hr)+len(hist_atm_3hr)+len(hist_atm_chem)+len(hist_atm_oth) > 0:
+    hist_atm_mon,hist_atm_dai,hist_atm_6hr,hist_atm_3hr,hist_atm_dai10,hist_atm_oth=hist_atm
+    if len(hist_atm_mon)+len(hist_atm_dai)+len(hist_atm_6hr)+len(hist_atm_3hr)+len(hist_atm_dai10)+len(hist_atm_oth) > 0:
         os.makedirs(arch_dir+'/'+loc_exp+'/history/atm/netCDF',exist_ok=True)   
     else: 
         print('no atm history files found')
@@ -240,44 +272,52 @@ def main():
     if len(hist_atm_mon) > 0:
         print('\nfound '+str(len(hist_atm_mon))+' monthly atm files')
         if ncpus == 1:
-            for file in hist_atm_mon: 
+            for file in hist_atm_mon:
                 check_um2nc(file,'mon')
-                sys.exit()
+                break
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'mon') for file in hist_atm_mon))
     if len(hist_atm_dai) > 0:
         print('\nfound '+str(len(hist_atm_dai))+' daily atm files')
         if ncpus == 1:
-            for file in hist_atm_dai: check_um2nc(file,'dai')
+            for file in hist_atm_dai: 
+                check_um2nc(file,'dai')
+                break
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'dai') for file in hist_atm_dai))
     if len(hist_atm_6hr) > 0:
         print('\nfound '+str(len(hist_atm_6hr))+' 6-hourly atm files')
         if ncpus == 1:
-            for file in hist_atm_6hr: check_um2nc(file,'6h')
+            for file in hist_atm_6hr: 
+                check_um2nc(file,'6h')
+                break
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'6h') for file in hist_atm_6hr))
     if len(hist_atm_3hr) > 0:
         print('\nfound '+str(len(hist_atm_3hr))+' 3-hourly atm files')
         if ncpus == 1:
-            for file in hist_atm_3hr: check_um2nc(file,'3h')
+            for file in hist_atm_3hr: 
+                check_um2nc(file,'3h')
+                break
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'3h') for file in hist_atm_3hr))
-    if len(hist_atm_chem) > 0:
-        print('\nfound '+str(len(hist_atm_chem))+' chemistry atm files')
+    if len(hist_atm_dai10) > 0:
+        print('\nfound '+str(len(hist_atm_dai10))+' 10-daily atm files')
         if ncpus == 1:
-            for file in hist_atm_chem: check_um2nc(file,'chem')
+            for file in hist_atm_dai10: 
+                check_um2nc(file,'dai10')
+                break
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'chem') for file in hist_atm_chem))
     if len(hist_atm_oth) > 0:
         print('\nfound '+str(len(hist_atm_oth))+' unidentified atm files (will not be converted):')
-        for file in hist_atm_oth:
-            print(file)
+        #for file in hist_atm_oth:
+        #    print(file)
     print('um2netCDF_iris complete')
 
 if __name__ == "__main__":
