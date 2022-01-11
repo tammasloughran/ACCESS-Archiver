@@ -14,17 +14,21 @@ proj=p66
 
 # above raw output directory
 base_dir=/scratch/p66/txz599/archive/
+#base_dir=/scratch/p66/mrd599/archive/
 #base_dir=/scratch/p66/cm2704/ACCESS-CM2-Chem/fd0474/
 
 # where to archive
-#arch_dir=/g/data/p73/archive/CMIP6
-arch_dir=/scratch/p66/cm2704/archive/
+arch_dir=/g/data/p73/archive/non-CMIP/ACCESS-ESM1-5/
+#arch_dir=/scratch/p66/cm2704/archive/
 
 # [cm2, cm2amip, cm2chem, esmscript, esmpayu, om2]
 access_version=esmscript
 
 loc_exp=(
-HI-08-t2
+HI-CN-05
+HI-C-05
+HI-noluc-CN-05
+HI-noluc-C-05
 )
 
 for exp in ${loc_exp[@]}; do
@@ -35,6 +39,3 @@ done
 
 exit
 
-ca547
-ca548
-ca587

@@ -111,6 +111,20 @@ def check_um2nc(file,freq):
             else: 
                 print(basename+': file already exists')
             sys.stdout.flush()
+        elif (not ncexists) and (not os.path.exists(file.replace('.nc',''))):
+            print(basename, 'UM pp files does not exist, using nc file')
+            for key in monmap.keys():
+                if basename.find(key) != -1:
+                    basename=basename.replace(key,monmap[key]).replace('.nc','')
+            outname=arch_dir+'/'+loc_exp+'/history/atm/netCDF/'+basename+'_'+freq+'.nc'
+            if not os.path.exists(outname):
+                shutil.copyfile(file,outname+'_tmp')
+                os.replace(outname+'_tmp',outname)
+                if plev8: do_plev8(outname)
+                os.chmod(outname,0o644)
+            else: 
+                print(basename+': file already exists')
+            sys.stdout.flush()   
     else:
         if os.path.exists(file+'.nc') and ncexists:
             print(basename, 'nc file exists, skipping')
@@ -313,7 +327,7 @@ def main():
                 break
         else:
             with mp.Pool(ncpus) as pool:
-                pool.starmap(check_um2nc,((file,'chem') for file in hist_atm_chem))
+                pool.starmap(check_um2nc,((file,'chem') for file in hist_atm_dai10))
     if len(hist_atm_oth) > 0:
         print('\nfound '+str(len(hist_atm_oth))+' unidentified atm files (will not be converted):')
         #for file in hist_atm_oth:

@@ -35,8 +35,8 @@ fi
 # ESM CMIP6 runs only
 plev8=false
 #
-# True: Use netcdf version of file if it exists
-# False: Always use UM pp-file, whether or not netcdf version exists
+# true: Use netcdf version of file if it exists
+# false: Always use UM pp-file if it exists, whether or not netcdf version exists
 ncexists=false
 #
 #####################
