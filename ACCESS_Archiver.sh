@@ -26,13 +26,13 @@ fi
 # Additional NCI projects to be included in the storage flags
 addprojs=( p73 )
 #
-# CM2 DAMIP runs only
+# CM2 DAMIP and CM2-Chem runs only
 zonal=false
 if [[ $access_version == *chem ]]; then
   zonal=true
 fi
 #
-# ESM CMIP6 runs only
+# ESM CMIP6 runs only; reduces daily plev19 data to plev8
 plev8=false
 #
 # true: Use netcdf version of file if it exists

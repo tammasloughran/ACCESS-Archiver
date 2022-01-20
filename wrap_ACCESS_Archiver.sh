@@ -38,4 +38,3 @@ for exp in ${loc_exp[@]}; do
 done
 
 exit
-
