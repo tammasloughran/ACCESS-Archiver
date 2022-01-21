@@ -4,8 +4,8 @@ module load pbs
 set -a
 #########################
 #
-# This is the ACCESS Archiver, v1.0
-# 15/07/2021
+# This is the ACCESS Archiver, v1.1
+# 21/01/2022
 # 
 # Developed by Chloe Mackallah, CSIRO Aspendale
 #
