@@ -1,11 +1,6 @@
 #!/bin/bash
 
-if [ ! -z $1 ]; then
-  base_dir=$1
-  loc_exp=$2
-  here=$3
-  access_version=$4
-else
+if [ -z $base_dir ]; then
   echo "information not provided to subroutines/find_files.sh"
   exit
 fi

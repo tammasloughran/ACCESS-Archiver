@@ -1,69 +1,83 @@
 #!/bin/bash
-#####################
+module purge
+module load pbs
+set -a
+#########################
 #
 # This is the ACCESS Archiver, v1.0
 # 15/07/2021
 # 
 # Developed by Chloe Mackallah, CSIRO Aspendale
 #
-#####
-module purge
-module load pbs
-#####################
-# GET VARS RUN FROM WRAPPER
-if [ ! -z $1 ]; then
-  arch_dir=$1
-  base_dir=$2
-  access_version=$3
-  loc_exp=$4
-  proj=$5
-else
-  echo "no experiment settings"
-  exit
-fi
-#####################
-#
-# Additional NCI projects to be included in the storage flags
-addprojs=( p73 )
-#
-# CM2 DAMIP and CM2-Chem runs only
+#########################
+# NON-STANDARD USER OPTIONS
+
+#split zonal/non-zonal files - CM2 DAMIP and CM2-Chem runs only
 zonal=false
+
+#reduce daily plev19 data to plev8 - ESM CMIP6 runs only
+plev8=false
+
+#########################
+# DO NOT EDIT - FIXED TASKS
+
+#check wrapper is used
+if [ -z $arch_dir ]; then
+  echo "no experiment settings"; exit
+fi
+here=$( pwd )
+mkdir -p $here/tmp/$loc_exp
+rm -f $here/tmp/$loc_exp/*
+#identify NCI project of base_dir
+IFS='/'
+read -a base_dir_split <<< $base_dir
+for bdse in ${base_dir_split[@]}; do
+  if [[ $bdse == '' ]] || [[ $bdse == ' ' ]] || [[ $bdse == 'g' ]] || \
+    [[ $bdse == 'data' ]] || [[ $bdse == 'scratch' ]]; then
+    continue
+  fi
+  base_grp=$bdse
+  break
+done
+#identify NCI project of arch_dir
+read -a arch_dir_split <<< $arch_dir
+for adse in ${arch_dir_split[@]}; do
+  if [[ $adse == '' ]] || [[ $adse == ' ' ]] || [[ $adse == 'g' ]] || \
+    [[ $adse == 'data' ]] || [[ $adse == 'scratch' ]]; then
+    continue
+  fi
+  arch_grp=$adse
+  break
+done
+IFS=' '
+mkdir -p $arch_dir/$loc_exp/{history/atm/netCDF,restart/atm}
+chgrp -R $arch_grp $arch_dir/$loc_exp
 if [[ $access_version == *chem ]]; then
   zonal=true
 fi
 #
-# ESM CMIP6 runs only; reduces daily plev19 data to plev8
-plev8=false
-#
-# true: Use netcdf version of file if it exists
-# false: Always use UM pp-file if it exists, whether or not netcdf version exists
-ncexists=false
-#
-#####################
-# FIXED SETTINGS
-here=$( pwd )
-mkdir -p $here/tmp/$loc_exp
-rm -f $here/tmp/$loc_exp/*
-for addproj in ${addprojs[@]}; do
-  addstore="${addstore}+scratch/${addproj}+gdata/${addproj}"
-done
-####
+#########################
+# PRINT DETAILS TO SCREEN 
+
 echo -e "\n==== ACCESS_Archiver ===="
-echo "base dir: $base_dir"
-echo "arch dir: $arch_dir"
-echo "local exp: $loc_exp"
+echo "here: $here"
+echo "compute project: $comp_proj"
+echo "base directory: $base_dir"
+echo "archive directory: $arch_dir"
+echo "local experiment: $loc_exp"
 echo "access version: $access_version"
-#####################
+echo "subdaily atm data: $subdaily"
+
+#########################
 # RUN SUBROUTINES
 
 if [[ $access_version == om2 ]]; then
-  ./subroutines/find_files_om2.sh $base_dir $loc_exp $here
+  ./subroutines/find_files_om2.sh
 elif [[ $access_version == esmpayu ]]; then
-  ./subroutines/find_files_payu.sh $base_dir $loc_exp $here
+  ./subroutines/find_files_payu.sh
 else
-  ./subroutines/find_files.sh $base_dir $loc_exp $here $access_version
+  ./subroutines/find_files.sh
 fi
-#exit
 
 echo -e "\n---- Setting up jobs ----"
 
@@ -72,10 +86,10 @@ cp $here/subroutines/run_um2nc.py $here/tmp/$loc_exp/run_um2nc.py
 #
 cat << EOF > $here/tmp/$loc_exp/job_um2nc.qsub.sh
 #!/bin/bash
-#PBS -P ${proj}
+#PBS -P ${comp_proj}
 #PBS -l walltime=48:00:00,ncpus=24,mem=190Gb
 #PBS -l wd
-#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access${addstore}
+#PBS -l storage=scratch/${base_grp}+gdata/${base_grp}+scratch/${arch_grp}+gdata/${arch_grp}+gdata/hh5+gdata/access
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_um2nc
@@ -85,16 +99,19 @@ module use ~access/modules
 module load cdo
 module load nco
 module load pythonlib/um2netcdf4/2.0
-export ncpus=\$PBS_NCPUS
-export here=$here
-export base_dir=$base_dir
-export arch_dir=$arch_dir
-export loc_exp=$loc_exp
-export zonal=$zonal
-export access_version=$access_version
-export plev8=$plev8
-export ncexists=$ncexists
-export UMDIR=/projects/access/umdir
+set -a 
+ncpus=\$PBS_NCPUS
+here=$here
+base_dir=$base_dir
+arch_dir=$arch_dir
+arch_grp=$arch_grp
+loc_exp=$loc_exp
+zonal=$zonal
+access_version=$access_version
+plev8=$plev8
+ncexists=$ncexists
+subdaily=$subdaily
+UMDIR=/projects/access/umdir
 
 echo -e "\n==== ACCESS_Archiver -- um2netcdf_iris ===="
 echo "base dir: $base_dir"
@@ -119,10 +136,10 @@ cp $here/subroutines/mppnccomb_check.sh $here/tmp/$loc_exp/mppnccomb_check.sh
 #
 cat << EOF > $here/tmp/$loc_exp/job_mppnc.qsub.sh
 #!/bin/bash
-#PBS -P ${proj}
+#PBS -P ${comp_proj}
 #PBS -l walltime=48:00:00,ncpus=1,mem=12Gb
 #PBS -l wd
-#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access${addstore}
+#PBS -l storage=scratch/${base_grp}+gdata/${base_grp}+scratch/${arch_grp}+gdata/${arch_grp}+gdata/hh5+gdata/access
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_mppnc
@@ -132,11 +149,13 @@ module use ~access/modules
 module load cdo
 module load nco
 module load conda/analysis3
-export here=$here
-export base_dir=$base_dir
-export arch_dir=$arch_dir
-export loc_exp=$loc_exp
-export access_version=$access_version
+set -a 
+here=$here
+base_dir=$base_dir
+arch_dir=$arch_dir
+arch_grp=$arch_grp
+loc_exp=$loc_exp
+access_version=$access_version
 
 echo -e "\n==== ACCESS_Archiver -- mppnccombine ===="
 echo "base dir: $base_dir"
@@ -170,10 +189,10 @@ fi
 #
 cat << EOF > $here/tmp/$loc_exp/job_arch.qsub.sh
 #!/bin/bash
-#PBS -P ${proj}
+#PBS -P ${comp_proj}
 #PBS -l walltime=48:00:00,ncpus=1,mem=8Gb
 #PBS -l wd
-#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access${addstore}
+#PBS -l storage=scratch/${base_grp}+gdata/${base_grp}+scratch/${arch_grp}+gdata/${arch_grp}+gdata/hh5+gdata/access
 #PBS -q normal
 #PBS -j oe
 #PBS -N ${loc_exp}_arch
@@ -184,11 +203,13 @@ module use ~access/modules
 module load cdo
 module load nco
 module load conda/analysis3
-export here=$here
-export base_dir=$base_dir
-export arch_dir=$arch_dir
-export loc_exp=$loc_exp
-export access_version=$access_version
+set -a
+here=$here
+base_dir=$base_dir
+arch_dir=$arch_dir
+arch_grp=$arch_grp
+loc_exp=$loc_exp
+access_version=$access_version
 
 echo -e "\n==== ACCESS_Archiver -- copy_job ===="
 echo "base dir: $base_dir"

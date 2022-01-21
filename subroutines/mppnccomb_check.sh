@@ -16,6 +16,7 @@ for histfile in ${mppncfiles[@]}; do
   echo $output
   rm -f $output
   $mppnc -n4 -z -v -r $output ${basefile}.????-$DATE
+  chgrp $arch_grp $output
   echo "completed generating $output"
 done
 

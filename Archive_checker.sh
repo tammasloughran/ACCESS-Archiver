@@ -1,48 +1,76 @@
 #!/bin/bash
 ################################
-if [ ! -z $1 ]; then
-  exptloc=$1
-  origloc=$2
-  access_ver=$3
-  expt=$4
-  proj=$5
-else
+#
+# This is the ACCESS Archiver, v1.0
+# 15/07/2021
+# 
+# Developed by Chloe Mackallah, CSIRO Aspendale
+#
+################################
+if [ -z $arch_dir ]; then
   echo "no experiment settings"
   exit
 fi
 ################################
-#
+# ADDITIONAL USER SETTINGS
+
+#turn on/off realms
 atm=1
 ocn=1
 ice=1
-#
-# Additional NCI projects to be included in the storage flags
-addprojs=( p73 )
+
+################################
+# DO NOT EDIT - FIXED TASKS
+
+#check wrapper is used
+if [ -z $arch_dir ]; then
+  echo "no experiment settings"
+  exit
+fi
+here=$( pwd )
+mkdir -p $here/tmp/$loc_ecp
+rm -f $here/tmp/$loc_exp/job_arch_check.qsub.sh 
+#identify NCI project of base_dir
+IFS='/'
+read -a base_dir_split <<< $base_dir
+for bdse in ${base_dir_split[@]}; do
+  if [[ $bdse == '' ]] || [[ $bdse == ' ' ]] || [[ $bdse == 'g' ]] || \
+    [[ $bdse == 'data' ]] || [[ $bdse == 'scratch' ]]; then
+    continue
+  fi
+  base_grp=$bdse
+  break
+done
+#identify NCI project of arch_dir
+IFS='/'
+read -a arch_dir_split <<< $arch_dir
+for adse in ${arch_dir_split[@]}; do
+  if [[ $adse == '' ]] || [[ $adse == ' ' ]] || [[ $adse == 'g' ]] || \
+    [[ $adse == 'data' ]] || [[ $adse == 'scratch' ]]; then
+    continue
+  fi
+  arch_grp=$adse
+  break
+done
 #
 ################################
-# FIXED SETTINGS
-#here=$( pwd )
-here=/g/data/p66/cm2704/ACCESS-Archiver
-mkdir -p $here/tmp/$expt
-rm -f $here/tmp/$expt/job_arch_check.qsub.sh 
-for addproj in ${addprojs[@]}; do
-  addstore="${addstore}+scratch/${addproj}+gdata/${addproj}"
-done
-####
+# PRINT DETAILS TO SCREEN 
+
 echo -e "\n==== ACCESS_Archiver ===="
-echo "orig dir: $origloc"
-echo "arch dir: $exptloc"
-echo "access version: $access_ver"
-echo "local exp: $expt"
-#
+echo "compute project: $comp_proj"
+echo "base directory: $base_dir"
+echo "archive directory: $arch_dir"
+echo "access version: $access_version"
+echo "local exp: $loc_exp"
+
 #################################
 #
-cat << EOF > $here/tmp/$expt/job_arch_check.qsub.sh 
+cat << EOF > $here/tmp/$loc_exp/job_arch_check.qsub.sh 
 #!/bin/bash
-#PBS -P ${proj}
+#PBS -P ${comp_proj}
 #PBS -q copyq
 #PBS -l walltime=10:00:00,ncpus=1,mem=8Gb,wd
-#PBS -l storage=scratch/${proj}+gdata/${proj}+gdata/hh5+gdata/access${addstore}
+#PBS -l storage=scratch/${base_grp}+gdata/${base_grp}+scratch/${arch_grp}+gdata/${arch_grp}+gdata/hh5+gdata/access
 #PBS -j oe
 #PBS -N ${expt}_arch_check
 module purge
@@ -52,14 +80,15 @@ module purge
 module load nco
 module load nccmp
 
-expt=$expt
-access_ver=$access_ver
-loc=$exptloc/$expt
-origloc=$origloc
+expt=$loc_exp
+access_ver=$access_version
+loc=$arch_dir/$loc_exp
+origloc=$base_dir
 rm -f \$loc/tmp*
 atm=$atm
 ocn=$ocn
 ice=$ice
+subdaily=$subdaily
 
 if [[ -z \$origloc ]]; then 
   echo no data location found for experiment \$expt
@@ -71,8 +100,11 @@ echo "expt: \$expt"
 echo "original loc: \$origloc"
 echo "expt loc: \$loc"
 
-declare -A atmfreq=( ["[m,a]"]="mon" ["[d,e]"]="dai" ["[7,j]"]="6h" ["[8,i]"]="3h" )
-#declare -A atmfreq=( ["[m,a]"]="mon" )
+if $subdaily; then
+  declare -A atmfreq=( ["[m,a]"]="mon" ["[d,e]"]="dai" ["[7,j]"]="6h" ["[8,i]"]="3h" )
+else
+  declare -A atmfreq=( ["[m,a]"]="mon" ["[d,e]"]="dai" )
+fi
 
 declare -A monmap=( ["jan"]="01" ["feb"]="02" ["mar"]="03" ["apr"]="04" ["may"]="05" ["jun"]="06"\
     ["jul"]="07" ["aug"]="08" ["sep"]="09" ["oct"]="10" ["nov"]="11" ["dec"]="12" )

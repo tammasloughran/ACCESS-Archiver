@@ -1,8 +1,10 @@
 #!/bin/bash
 
-echo -e "\n---- Copy history ----"
-echo $loc_exp
-echo $access_version
+echo -e "\n==== ACCESS_Archiver -- copy_job ===="
+echo "base dir: $base_dir"
+echo "arch dir: $arch_dir"
+echo "local exp: $loc_exp"
+echo "access version: $access_version"
 
 if [ ! -f $here/tmp/$loc_exp/payu_info.csv ]; then
   echo "$here/tmp/$loc_exp/payu_info.csv not found!"
@@ -28,7 +30,7 @@ determ_payu_val () {
 # ocn
 echo -e "\ncopying $( cat $here/tmp/$loc_exp/hist_ocn_files.csv | wc -l ) ocean files"
 curdir=$arch_dir/$loc_exp/history/ocn
-mkdir -p $curdir
+mkdir -p $curdir; chgrp $arch_grp $curdir
 rm -f $curdir/*_tmp* 2>/dev/null
 while IFS=, read -r file; do
   fdir=`dirname $file`
@@ -54,7 +56,7 @@ while IFS=, read -r file; do
       fi
       mv $curdir/${fname}_tmp $curdir/$fname
       chmod 644 $curdir/$fname
-      chgrp p66 $curdir/$fname
+      chgrp $arch_grp $curdir/$fname
     else
       if [[ $file == *.nc.0000* ]]; then
         echo "creating symlinks"
@@ -77,7 +79,7 @@ rm -f $curdir/*_tmp
 # ice
 echo -e "\ncopying $( cat $here/tmp/$loc_exp/hist_ice_files.csv | wc -l ) ice files"
 curdir=$arch_dir/$loc_exp/history/ice
-mkdir -p $curdir
+mkdir -p $curdir; chgrp $arch_grp $curdir
 rm -f $curdir/*_tmp* 2>/dev/null
 while IFS=, read -r file; do
   fdir=`dirname $file`
@@ -118,7 +120,7 @@ while IFS=, read -r file; do
     done
     mv $curdir/${fname}_tmp $curdir/$fname
     chmod 644 $curdir/$fname
-    chgrp p66 $curdir/$fname
+    chgrp $arch_grp $curdir/$fname
   else
     echo "-- $file copied already"
   fi

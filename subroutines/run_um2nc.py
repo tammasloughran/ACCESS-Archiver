@@ -13,8 +13,11 @@ except: ncpus=1
 here=os.environ.get('here')
 base_dir=os.environ.get('base_dir')
 arch_dir=os.environ.get('arch_dir')
+arch_grp=os.stat(arch_dir).st_gid
 loc_exp=os.environ.get('loc_exp')
 access_version=os.environ.get('access_version')
+if os.environ.get('subdaily').lower() in ['true','yes','1']: subdaily=True
+else: subdaily=False
 if os.environ.get('ncexists').lower() in ['true','yes','1']: ncexists=True
 else: ncexists=False
 if os.environ.get('zonal').lower() in ['true','yes','1']: zonal=True
@@ -47,6 +50,7 @@ def do_plev8(outname):
                 print('attempting plev8 conversion')
                 [dirname,basename]=os.path.split(outname)
                 os.makedirs(dirname+'/plev19_daily',exist_ok=True)
+                os.chown(dirname+'/plev19_daily',os.stat(dirname+'/plev19_daily').st_uid,arch_grp)
                 plev19file=dirname+'/plev19_daily/'+basename
                 plev8file=outname+'_plev8'
                 os.rename(outname,plev19file)
@@ -178,6 +182,7 @@ def do_um2nc(file,freq):
         os.replace(outname+'_tmp',outname)
         if plev8: do_plev8(outname)
         os.chmod(outname,0o644)
+        os.chown(outname,os.stat(outname).st_uid,arch_grp)
         try: 
             if os.path.getsize(outname) < 1024:
                 print('removing empty file: ',outname)
@@ -192,6 +197,7 @@ def do_um2nc(file,freq):
 def do_um2nc_zonal(file,freq):
     basename=os.path.basename(file)
     os.makedirs(arch_dir+'/'+loc_exp+'/history/atm/zonal/',exist_ok=True)
+    os.chown(arch_dir+'/'+loc_exp+'/history/atm/zonal/',os.stat(arch_dir+'/'+loc_exp+'/history/atm/zonal/').st_uid,arch_grp)
     tmpname=arch_dir+'/'+loc_exp+'/history/atm/zonal/'+basename
     for key in monmap.keys():
         if basename.find(key) != -1:
@@ -213,11 +219,13 @@ def do_um2nc_zonal(file,freq):
             um2netcdf4.process(tmpname+"_zonal",outname+"_zonal_tmp",args)
             os.replace(outname+"_zonal_tmp",outname+"_zonal")
             os.chmod(outname+"_zonal",0o644)
+            os.chown(outname+"_zonal",os.stat(outname+"_zonal").st_uid,arch_grp)
         except: print('no zonal data')
         try:
             um2netcdf4.process(tmpname+"_nonzonal",outname+'_tmp',args)
             os.replace(outname+'_tmp',outname)
             os.chmod(outname,0o644)
+            os.chown(outname,os.stat(outname).st_uid,arch_grp)
         except: print('no nonzonal data')
         os.remove(tmpname+"_nonzonal")
         os.remove(tmpname+"_zonal")
@@ -276,13 +284,15 @@ def main():
     hist_atm=read_files(here,loc_exp)
     hist_atm_mon,hist_atm_dai,hist_atm_6hr,hist_atm_3hr,hist_atm_dai10,hist_atm_oth=hist_atm
     if len(hist_atm_mon)+len(hist_atm_dai)+len(hist_atm_6hr)+len(hist_atm_3hr)+len(hist_atm_dai10)+len(hist_atm_oth) > 0:
-        os.makedirs(arch_dir+'/'+loc_exp+'/history/atm/netCDF',exist_ok=True)   
+        os.makedirs(arch_dir+'/'+loc_exp+'/history/atm/netCDF',exist_ok=True)
+        os.chown(arch_dir+'/'+loc_exp+'/history/atm/netCDF',os.stat(arch_dir+'/'+loc_exp+'/history/atm/netCDF').st_uid,arch_grp)   
     else: 
         print('no atm history files found')
     # Do um2netcdf  
     print('converting UM files to netCDF4')
     print('multiprocessor sees {} cpus'.format(ncpus))
     print('zonal processing is {}'.format(zonal))
+    print('subdaily processing is {}'.format(subdaily))
     if len(hist_atm_mon) > 0:
         print('\nfound '+str(len(hist_atm_mon))+' monthly atm files')
         if ncpus == 1:
@@ -301,7 +311,7 @@ def main():
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'dai') for file in hist_atm_dai))
-    if len(hist_atm_6hr) > 0:
+    if len(hist_atm_6hr) > 0 and subdaily:
         print('\nfound '+str(len(hist_atm_6hr))+' 6-hourly atm files')
         if ncpus == 1:
             for file in hist_atm_6hr: 
@@ -310,7 +320,7 @@ def main():
         else:
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'6h') for file in hist_atm_6hr))
-    if len(hist_atm_3hr) > 0:
+    if len(hist_atm_3hr) > 0 and subdaily:
         print('\nfound '+str(len(hist_atm_3hr))+' 3-hourly atm files')
         if ncpus == 1:
             for file in hist_atm_3hr: 

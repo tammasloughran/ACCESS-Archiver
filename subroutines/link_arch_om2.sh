@@ -28,7 +28,7 @@ determ_om2_val () {
 # ocn
 echo -e "\nlinking $( cat $here/tmp/$loc_exp/hist_ocn_files.csv | wc -l ) ocean files"
 curdir=$arch_dir/$loc_exp/history/ocn
-mkdir -p $curdir
+mkdir -p $curdir; chgrp $arch_grp $curdir
 rm -f $curdir/*_tmp* 2>/dev/null
 while IFS=, read -r file; do
   fdir=`dirname $file`
@@ -55,7 +55,7 @@ done < $here/tmp/$loc_exp/hist_ocn_files.csv
 # ice
 echo -e "\nlinking $( cat $here/tmp/$loc_exp/hist_ice_files.csv | wc -l ) ice files"
 curdir=$arch_dir/$loc_exp/history/ice
-mkdir -p $curdir
+mkdir -p $curdir; chgrp $arch_grp $curdir
 rm -f $curdir/*_tmp* 2>/dev/null
 while IFS=, read -r file; do
   fdir=`dirname $file`
@@ -109,7 +109,7 @@ while IFS=, read -r file; do
       done
       mv $curdir/${fname}_tmp $curdir/$fname
       chmod 644 $curdir/$fname
-      chgrp p66 $curdir/$fname
+      chgrp $arch_grp $curdir/$fname
     else
       ln -s $file $curdir/${fname}
     fi
@@ -121,7 +121,7 @@ exit
 # restarts
 echo -e "copying $( cat $here/tmp/$loc_exp/rest_dirs.csv | wc -l ) restart cycles"
 curdir=$arch_dir/$loc_exp/restart/
-mkdir -p $curdir
+mkdir -p $curdir; chgrp $arch_grp $curdir
 while IFS=, read -r cycle; do
   cyclename=`basename $cycle`
   echo "-- $cyclename"
