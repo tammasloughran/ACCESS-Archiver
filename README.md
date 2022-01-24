@@ -5,6 +5,12 @@ This is the ACCESS Archiver, v1.1
 Developed by Chloe Mackallah, CSIRO Aspendale; 
 with significant contributions from Martin Dix and others.
 
+---
+
+The ACCESS Archiver is designed to archive model output from [ACCESS](https://research.csiro.au/access/) simulations. It's focus is to copy ACCESS model output from its initial location to a secondary location (typically from /scratch to /g/data), while converting UM files to netCDF, compressing MOM/CICE files, and culling restart files to 10-yearly. Saves 50-80% of storage space due to conversion and compression.
+
+Supported versions are CM2 (coupled, amip & chem versions), ESM1.5 (script & payu versions), OM2[-025]. For use on NCI's Gadi system only.
+
 ## wrap_ACCESS_Archiver.sh
 
 Main control script. Here you will specify:  
