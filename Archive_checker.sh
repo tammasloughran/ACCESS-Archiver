@@ -7,11 +7,6 @@
 # Developed by Chloe Mackallah, CSIRO Aspendale
 #
 ################################
-if [ -z $arch_dir ]; then
-  echo "no experiment settings"
-  exit
-fi
-################################
 # ADDITIONAL USER SETTINGS
 
 #turn on/off realms
@@ -28,7 +23,7 @@ if [ -z $arch_dir ]; then
   exit
 fi
 here=$( pwd )
-mkdir -p $here/tmp/$loc_ecp
+mkdir -p $here/tmp/$loc_exp
 rm -f $here/tmp/$loc_exp/job_arch_check.qsub.sh 
 #identify NCI project of base_dir
 IFS='/'
@@ -52,6 +47,7 @@ for adse in ${arch_dir_split[@]}; do
   arch_grp=$adse
   break
 done
+IFS=
 #
 ################################
 # PRINT DETAILS TO SCREEN 
@@ -401,6 +397,6 @@ fi
 
 EOF
 
-/bin/chmod 755 $here/tmp/$expt/job_arch_check.qsub.sh
-ls $here/tmp/$expt/job_arch_check.qsub.sh
-qsub $here/tmp/$expt/job_arch_check.qsub.sh
+/bin/chmod 755 $here/tmp/$loc_exp/job_arch_check.qsub.sh
+ls $here/tmp/$loc_exp/job_arch_check.qsub.sh
+qsub $here/tmp/$loc_exp/job_arch_check.qsub.sh
