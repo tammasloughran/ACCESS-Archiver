@@ -23,6 +23,11 @@ vi) whether of not to archive subdaily atmospheric files (*subdaily*),
 vii) whether or not to use any pre-converted netCDF files (*ncexists*), and  
 viii) the task to run (*task*; either archive an exp, or check a previously archived exp). 
 
+To run, simply use the command: 
+``` 
+$ ./wrap_ACCESS_Archiver.sh  
+```
+
 ## ACCESS_Archiver.sh
 
 PBS job creator script. Additional controls in this script include options to:   
