@@ -17,7 +17,8 @@ comp_proj=p66
 base_dir=/scratch/p66/txz599/archive/
 
 #arch_dir = location to archive
-arch_dir=/g/data/p73/archive/non-CMIP/ #ACCESS-ESM1-5/
+#arch_dir=/g/data/p73/archive/non-CMIP/ #ACCESS-ESM1-5/
+arch_dir=/scratch/p66/txz599/ACCESS_output/
 
 #access_version = [cm2, cm2amip, cm2chem, esmscript, esmpayu, om2]
 access_version=esmscript
@@ -30,11 +31,11 @@ ncexists=false
 subdaily=false
 
 #loc_exps = list of local experiment names (stored in 'base_dir') to archive
-loc_exps=( HI-08-t2 )
+loc_exps=( PI-GWL-B2050_1 )
 
 #task = [archive, check]
 #archive: run ACCESS_Archiver.sh; check: run Archive_checker.sh
-task=archive
+task=check
 
 
 #

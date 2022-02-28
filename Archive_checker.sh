@@ -68,7 +68,7 @@ cat << EOF > $here/tmp/$loc_exp/job_arch_check.qsub.sh
 #PBS -l walltime=10:00:00,ncpus=1,mem=8Gb,wd
 #PBS -l storage=scratch/${base_grp}+gdata/${base_grp}+scratch/${arch_grp}+gdata/${arch_grp}+gdata/hh5+gdata/access
 #PBS -j oe
-#PBS -N ${expt}_arch_check
+#PBS -N ${loc_exp}_arch_check
 module purge
 #module use /g/data/hh5/public/modules
 #module use ~access/modules
@@ -96,7 +96,7 @@ echo "expt: \$expt"
 echo "original loc: \$origloc"
 echo "expt loc: \$loc"
 
-if $subdaily; then
+if \$subdaily; then
   declare -A atmfreq=( ["[m,a]"]="mon" ["[d,e]"]="dai" ["[7,j]"]="6h" ["[8,i]"]="3h" )
 else
   declare -A atmfreq=( ["[m,a]"]="mon" ["[d,e]"]="dai" )
@@ -111,14 +111,14 @@ for freq in "\${!atmfreq[@]}"; do
     atmok=0
     atmbad=0
     atmmissing=0
-    if [[ $access_ver == cm2 ]] || [[ $access_ver == esmscript ]]; then
+    if [[ \$access_ver == cm2 ]] || [[ \$access_ver == esmscript ]]; then
       atmfind=\$( find \${origloc}/\${expt}/history/atm/ -maxdepth 1 -type f -name "*.p"\$freq"*" -printf "%p\n" | sort )
-    elif [[ $access_ver == cm2amip ]]; then
+    elif [[ \$access_ver == cm2amip ]]; then
       atmfind=\$( find \${origloc}/u-\${expt}/share/data/History_Data/ -maxdepth 1 -type f -name "*.p"\$freq"*" -printf "%p\n" | sort )
-    elif [[ $access_ver == *payu ]]; then
+    elif [[ \$access_ver == *payu ]]; then
       atmfind=\$( find \${origloc}/\${expt}/output*/atmosphere/ -maxdepth 1 -type f -name "aiihca.p"\$freq"*" -printf "%p\n" | sort )
     else
-      echo "ACCESS version $access_ver not included in Archive_checker yet!"
+      echo "ACCESS version \$access_ver not included in Archive_checker yet!"
       exit
     fi
     if [ "\${atmfind}" != "" ]; then
@@ -135,7 +135,7 @@ for freq in "\${!atmfreq[@]}"; do
         elif [[ \$b == *.nc ]]; then
           b=\${b//.nc}
         fi
-        if [[ $access_ver == *payu ]]; then
+        if [[ \$access_ver == *payu ]]; then
           dir=\$(dirname \$origfile)
           timestampfile="\$dir"/../ocean/time_stamp.out
           if [ ! -f \$timestampfile ]; then
@@ -229,7 +229,7 @@ for freq in "\${!atmfreq[@]}"; do
   fi
 done
 
-if [[ $access_ver == cm2amip ]]; then
+if [[ \$access_ver == cm2amip ]]; then
   exit
 fi
 
@@ -238,7 +238,7 @@ if [[ "\$ocn" == 1 ]]; then
   ocnok=0
   ocnbad=0
   ocnmissing=0
-  if [[ $access_ver == *payu ]]; then
+  if [[ \$access_ver == *payu ]]; then
     ocnfind=\$( find \${origloc}/\${expt}/output*/ocean -type f -name "ocean_*.nc*" -printf "%p\n" | sort )
   else
     ocnfind=\$( find \${origloc}/\${expt}/history/ocn/ -type f -name "ocean*.nc*" -printf "%p\n" | sort )
@@ -250,7 +250,7 @@ if [[ "\$ocn" == 1 ]]; then
         echo "\$b is hidden, skipping"
         continue
       fi
-      if [[ $access_ver == *payu ]]; then
+      if [[ \$access_ver == *payu ]]; then
         dir=\$(dirname \$origfile)
         timestampfile="\$dir"/time_stamp.out
         if [ ! -f \$timestampfile ]; then
@@ -270,7 +270,7 @@ if [[ "\$ocn" == 1 ]]; then
       fi
       if [[ \$newfile == *.nc.[0-9][0-9][0-9][0-9]* ]]; then
         if [[ \$newfile == *.nc.0000* ]]; then
-          if [[ $access_ver == *payu ]]; then
+          if [[ \$access_ver == *payu ]]; then
             newfile=\${newfile//.0000/}
           else
             #mppnfile=\${newfile%.*}
@@ -325,7 +325,7 @@ if [[ "\$ice" == 1 ]]; then
   iceok=0
   icebad=0
   icemissing=0
-  if [[ $access_ver == *payu ]]; then
+  if [[ \$access_ver == *payu ]]; then
     icefind=\$( find \${origloc}/\${expt}/output*/ice/ -type f -name "ice*.nc" -printf "%p\n" | sort )
   else
     icefind=\$( find \${origloc}/\${expt}/history/ice/ -type f -name "iceh*" -printf "%p\n" | sort )
@@ -337,7 +337,7 @@ if [[ "\$ice" == 1 ]]; then
         echo "\$b is hidden, skipping"
         continue
       fi
-      if [[ $access_ver == *payu ]]; then
+      if [[ \$access_ver == *payu ]]; then
         dir=\$(dirname \$origfile)
         timestampfile="\$dir"/../ocean/time_stamp.out
         if [ ! -f \$timestampfile ]; then
