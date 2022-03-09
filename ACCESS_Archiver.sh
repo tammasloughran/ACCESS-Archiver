@@ -79,6 +79,8 @@ else
   ./subroutines/find_files.sh
 fi
 
+#exit
+
 echo -e "\n---- Setting up jobs ----"
 
 #---- um2nc parallel job ----#
