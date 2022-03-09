@@ -116,6 +116,7 @@ access_version=$access_version
 plev8=$plev8
 ncexists=$ncexists
 subdaily=$subdaily
+convert_unknown=$convert_unknown
 UMDIR=/projects/access/umdir
 
 echo -e "\n==== ACCESS_Archiver -- um2netcdf_iris ===="
