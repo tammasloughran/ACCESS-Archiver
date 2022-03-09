@@ -18,6 +18,9 @@ zonal=false
 #reduce daily plev19 data to plev8 - ESM CMIP6 runs only
 plev8=false
 
+#convert_unknown = [true, false]; convert unrecognised pp files that are found?
+convert_unknown=false
+
 #########################
 # DO NOT EDIT - FIXED TASKS
 

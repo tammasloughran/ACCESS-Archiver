@@ -24,6 +24,8 @@ if os.environ.get('zonal').lower() in ['true','yes','1']: zonal=True
 else: zonal=False
 if os.environ.get('plev8').lower() in ['true','yes','1']: plev8=True
 else: plev8=False
+if os.environ.get('convert_unknown').lower() in ['true','yes','1']: convert_unknown=True
+else: convert_unknown=False
 Args = collections.namedtuple('Args',\
     'nckind compression simple nomask hcrit verbose include_list exclude_list nohist use64bit')
 args = Args(3, 4, True, False, 0.5, False, None, None, False, False)
@@ -175,10 +177,24 @@ def do_um2nc(file,freq):
         if access_version.find('esm') != -1:
             lbvc9=fix_esm_lbvc9(file,outname)
             if lbvc9: 
-                um2netcdf4.process(outname.replace('.nc','')+'_lbvc9-fixed',outname+'_tmp',args)
+                try: um2netcdf4.process(outname.replace('.nc','')+'_lbvc9-fixed',outname+'_tmp',args)
+                except Exception as e: 
+                    print('um2nc conversion failed: {}'.format(e))
+                    os.remove(outname+'_tmp')
+                    return
                 os.remove(outname.replace('.nc','')+'_lbvc9-fixed')
-            else: um2netcdf4.process(file,outname+'_tmp',args)
-        else: um2netcdf4.process(file,outname+'_tmp',args)
+            else: 
+                try: um2netcdf4.process(file,outname+'_tmp',args)
+                except Exception as e: 
+                    print('um2nc conversion failed: {}'.format(e))
+                    os.remove(outname+'_tmp')
+                    return
+        else: 
+            try: um2netcdf4.process(file,outname+'_tmp',args)
+            except Exception as e: 
+                print('um2nc conversion failed: {}'.format(e))
+                os.remove(outname+'_tmp')
+                return
         os.replace(outname+'_tmp',outname)
         if plev8: do_plev8(outname)
         os.chmod(outname,0o644)
@@ -216,13 +232,21 @@ def do_um2nc_zonal(file,freq):
         sp.run(["mule-select",file,tmpname+"_zonal","--include","lbnpt=1"],capture_output=False)
         sp.run(["mule-select",file,tmpname+"_nonzonal","--exclude","lbnpt=1"],capture_output=False)
         try:
-            um2netcdf4.process(tmpname+"_zonal",outname+"_zonal_tmp",args)
+            try: um2netcdf4.process(tmpname+"_zonal",outname+"_zonal_tmp",args)
+            except Exception as e: 
+                print('um2nc conversion failed: {}'.format(e))
+                os.remove(outname+'_zonal_tmp')
+                return
             os.replace(outname+"_zonal_tmp",outname+"_zonal")
             os.chmod(outname+"_zonal",0o644)
             os.chown(outname+"_zonal",os.stat(outname+"_zonal").st_uid,arch_grp)
         except: print('no zonal data')
         try:
-            um2netcdf4.process(tmpname+"_nonzonal",outname+'_tmp',args)
+            try: um2netcdf4.process(tmpname+"_nonzonal",outname+'_tmp',args)
+            except Exception as e: 
+                print('um2nc conversion failed: {}'.format(e))
+                os.remove(outname+'_tmp')
+                return
             os.replace(outname+'_tmp',outname)
             os.chmod(outname,0o644)
             os.chown(outname,os.stat(outname).st_uid,arch_grp)
@@ -339,7 +363,17 @@ def main():
             with mp.Pool(ncpus) as pool:
                 pool.starmap(check_um2nc,((file,'chem') for file in hist_atm_dai10))
     if len(hist_atm_oth) > 0:
-        print('\nfound '+str(len(hist_atm_oth))+' unidentified atm files (will not be converted):')
+        if convert_unknown:
+            print('\nfound '+str(len(hist_atm_oth))+' unknown atm files')
+            if ncpus == 1:
+                for file in hist_atm_oth: 
+                    check_um2nc(file,'unknown')
+                    #break
+            else:
+                with mp.Pool(ncpus) as pool:
+                    pool.starmap(check_um2nc,((file,'unknown') for file in hist_atm_oth))
+        else:
+            print('\nfound '+str(len(hist_atm_oth))+' unidentified atm files (will not be converted):')
         #for file in hist_atm_oth:
         #    print(file)
     print('um2netCDF_iris complete')
