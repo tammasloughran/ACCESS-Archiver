@@ -21,7 +21,8 @@ iv) the version of ACCESS used (*access_version*; supported versions are CM2, CM
 v) the name(s) of the experiment(s) which is/are to be archived (*loc_exps*),  
 vi) whether of not to archive subdaily atmospheric files (*subdaily*),  
 vii) whether or not to use any pre-converted netCDF files (*ncexists*), and  
-viii) the task to run (*task*; either archive an exp, or check a previously archived exp). 
+viii) the task to run (*task*; either archive an exp, or check a previously archived exp).  
+ix) set year range to be archived (optional, default is all years; comment out for default)
 
 To run, simply use the command: 
 ``` 

@@ -4,7 +4,7 @@ set -a
 #
 # This is the wrapper for the ACCESS Archiver
 # 21/01/2022
-# 
+#
 # Developed by Chloe Mackallah, CSIRO Aspendale
 #
 #########################
@@ -23,7 +23,7 @@ arch_dir=/g/data/p73/archive/non-CMIP/ACCESS-CM2/
 #access_version = [cm2, cm2amip, cm2chem, esmscript, esmpayu, om2]
 access_version=cm2chem
 
-#ncexists = [true, false] 
+#ncexists = [true, false]
 #true: Copy netcdf version of file if it exists; false: Always use UM pp-file if it exists, whether or not netcdf version exists
 ncexists=false
 
@@ -41,13 +41,18 @@ ch097
 #archive: run ACCESS_Archiver.sh; check: run Archive_checker.sh
 task=check
 
+# Optionally set year range to archive.
+# Default if unset is all.
+#first_year=1
+#last_year=100
+
 #
 #########################
 # DO NOT EDIT - FIXED TASKS
 
 #run Archiver or checker
 for loc_exp in ${loc_exps[@]}; do
-  if [[ $task == archive ]]; then 
+  if [[ $task == archive ]]; then
     ./ACCESS_Archiver.sh
   elif [[ $task == check ]]; then
     ./Archive_checker.sh
