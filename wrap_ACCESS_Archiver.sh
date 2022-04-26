@@ -14,29 +14,32 @@ set -a
 comp_proj=p66
 
 #base_dir = location above raw output directory
-#base_dir=/scratch/p66/txz599/archive/
-base_dir=/scratch/p66/pbd562/cylc-run
+base_dir=/scratch/p66/fd0474/archive
+#base_dir=/scratch/p66/txz599/archive
 
 #arch_dir = location to archive
-#arch_dir=/g/data/p73/archive/non-CMIP/ACCESS-ESM1-5/
-arch_dir=/scratch/p66/cm2704/cylc-arch
+arch_dir=/g/data/p73/archive/non-CMIP/ACCESS-CM2/
 
 #access_version = [cm2, cm2amip, cm2chem, esmscript, esmpayu, om2]
-access_version=cm2amip
+access_version=cm2chem
 
 #ncexists = [true, false] 
 #true: Copy netcdf version of file if it exists; false: Always use UM pp-file if it exists, whether or not netcdf version exists
 ncexists=false
 
 #subdaily = [true, false]; convert subdaily atm files?
-subdaily=true
+subdaily=false
 
 #loc_exps = list of local experiment names (stored in 'base_dir') to archive
-loc_exps=( bw993.n96 )
+loc_exps=(
+ch097
+#HI-C-05-r1
+#HI-nl-C-05-r1
+)
 
 #task = [archive, check]
 #archive: run ACCESS_Archiver.sh; check: run Archive_checker.sh
-task=archive
+task=check
 
 #
 #########################
