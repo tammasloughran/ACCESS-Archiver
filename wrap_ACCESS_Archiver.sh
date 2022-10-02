@@ -14,14 +14,14 @@ set -a
 comp_proj=p66
 
 #base_dir = location above raw output directory
-base_dir=/scratch/p66/fd0474/archive
-#base_dir=/scratch/p66/txz599/archive
+#base_dir=/scratch/p66/fd0474/archive
+base_dir=/scratch/p66/txz599/archive
 
 #arch_dir = location to archive
-arch_dir=/g/data/p73/archive/non-CMIP/ACCESS-CM2/
+arch_dir=/g/data/p73/archive/CMIP6/ACCESS-ESM1-5/
 
 #access_version = [cm2, cm2amip, cm2chem, esmscript, esmpayu, om2]
-access_version=cm2chem
+access_version=esmscript
 
 #ncexists = [true, false]
 #true: Copy netcdf version of file if it exists; false: Always use UM pp-file if it exists, whether or not netcdf version exists
@@ -32,14 +32,13 @@ subdaily=false
 
 #loc_exps = list of local experiment names (stored in 'base_dir') to archive
 loc_exps=(
-ch097
-#HI-C-05-r1
-#HI-nl-C-05-r1
+#ch097
+SSP-534-lu-05
 )
 
 #task = [archive, check]
 #archive: run ACCESS_Archiver.sh; check: run Archive_checker.sh
-task=check
+task=archive
 
 # Optionally set year range to archive.
 # Default if unset is all.
