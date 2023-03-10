@@ -5,6 +5,9 @@ This is the ACCESS Archiver, v1.1
 Developed by Chloe Mackallah, CSIRO Aspendale; 
 with significant contributions from Martin Dix and others.
 
+This repository was iniated from the orginal (and no-longer active) NCI GitLab repo https://git.nci.org.au/cm2704/ACCESS-Archiver on 9 March, 2023.  
+For the authoritative version of this code as used for the archiving of ACCESS datasets for CMIP6 (stored in p73 on NCI's Gadi), see https://doi.org/10.5281/zenodo.7703522.  
+
 ---
 
 The ACCESS Archiver is designed to archive model output from [ACCESS](https://research.csiro.au/access/) simulations. It's focus is to copy ACCESS model output from its initial location to a secondary location (typically from /scratch to /g/data), while converting UM files to netCDF, compressing MOM/CICE files, and culling restart files to 10-yearly. Saves 50-80% of storage space due to conversion and compression.
