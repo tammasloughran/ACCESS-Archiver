@@ -102,6 +102,8 @@ echo -e "\n---- Setting up jobs ----"
 
 #---- um2nc parallel job ----#
 cp $here/subroutines/run_um2nc.py $here/tmp/$loc_exp/run_um2nc.py
+cp $here/subroutines/um2netcdf4.py $here/tmp/$loc_exp/um2netcdf4.py # TFL: use local stashvars
+cp $here/subroutines/stashvar_cmip6.py $here/tmp/$loc_exp/stashvar_cmip6.py
 #
 cat << EOF > $here/tmp/$loc_exp/job_um2nc.qsub.sh
 #!/bin/bash
@@ -117,7 +119,8 @@ module use /g/data/hh5/public/modules
 module use ~access/modules
 module load cdo
 module load nco
-module load pythonlib/um2netcdf4/2.0
+#module load pythonlib/um2netcdf4/2.0 # TFL replaced by local um2netcdf4.py
+module load conda/analysis3-23.10
 set -a
 ncpus=\$PBS_NCPUS
 here=$here
@@ -139,7 +142,7 @@ echo "arch dir: $arch_dir"
 echo "local exp: $loc_exp"
 echo "access version: $access_version"
 
-python -W ignore $here/tmp/$loc_exp/run_um2nc.py
+python3 -W ignore $here/tmp/$loc_exp/run_um2nc.py
 
 EOF
 if [[ $access_version != om2 ]]; then
